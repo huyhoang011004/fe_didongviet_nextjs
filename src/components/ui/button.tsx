@@ -10,6 +10,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        header:
+          "rounded-full border border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:border-white/40 focus-visible:ring-white/40",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
@@ -26,11 +28,15 @@ const buttonVariants = cva(
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+
+        "header-responsive": "h-9 gap-1.5 p-1.5 text-xs rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-4 sm:h-7 sm:w-7 sm:p-0 sm:aspect-square sm:justify-center sm:has-data-[icon=inline-end]:p-0 sm:has-data-[icon=inline-start]:p-0 sm:[&_svg:not([class*='size-'])]:size-3.5 md:h-8 md:gap-1.5 md:px-3 md:text-sm md:aspect-auto md:w-auto md:has-data-[icon=inline-end]:pr-2 md:has-data-[icon=inline-start]:pl-2 md:[&_svg:not([class*='size-'])]:size-4 lg:h-9 lg:gap-1.5 lg:px-2.5 lg:text-sm lg:has-data-[icon=inline-end]:pr-2 lg:has-data-[icon=inline-start]:pl-2 lg:[&_svg:not([class*='size-'])]:size-4 xl:h-9 xl:gap-2 xl:px-3.5 xl:text-sm xl:has-data-[icon=inline-end]:pr-2.5 xl:has-data-[icon=inline-start]:pl-2.5 xl:[&_svg:not([class*='size-'])]:size-4",
+
         icon: "size-8",
         "icon-xs":
           "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+        "icon-md": "size-8",
         "icon-lg": "size-9",
       },
     },

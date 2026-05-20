@@ -5,7 +5,6 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Di Dong Viet Brand Colors */
   --color-didongviet-red: #ed1c24;
   --color-didongviet-dark-red: #c41219;
   
@@ -34,8 +33,7 @@
 }
 
 :root {
-  /* Sử dụng oklch tương ứng với mã đỏ #ed1c24 của Di Động Việt */
-  --primary: oklch(0.6 0.25 25); 
+  --primary: oklch(52.157% 0.20755 24.083); 
   --primary-foreground: oklch(0.985 0 0);
   
   --background: oklch(1 0 0);
@@ -61,7 +59,7 @@
   
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.6 0.25 25); /* Ring cũng dùng màu đỏ brand */
+  --ring: oklch(0.6 0.25 25); 
   
   --radius: 0.5rem;
 }
@@ -106,3 +104,19 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@layer utilities {
+  .animate-marquee {
+    animation: marquee 20s linear infinite;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+

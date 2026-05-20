@@ -1,15 +1,15 @@
 export const CONTACT_INFO = {
-    hotline: "1800.6018",
-    email: "lienhe@didongviet.vn",
+    hotline: "0888.765.650",
+    email: "nvhhoang1@gmail.com",
     website: "https://didongviet.vn",
     company: "Công Ty Cổ phần Công Nghệ Di Động Việt",
-    address: "77 Trần Quang Khải, P. Tân Định, TP. Hồ Chí Minh",
-    business_license: "0312193244",
-    representative: "Nguyễn Ngọc Đạt",
+    address: "Số 168, Ngõ 49, Phố Triều Khúc, Phường Thanh Xuân Nam, Quận Thanh Xuân, Hà Nội",
+    business_license: "0108822906",
+    representative: "Nguyễn Văn Huy Hoàng",
     social: {
-        facebook: "https://www.facebook.com/didongviet",
-        youtube: "https://www.youtube.com/didongvietnam",
-        tiktok: "https://www.tiktok.com/@didongviet.official"
+        facebook: "https://www.facebook.com/huyhoang.nguyenvan.56232",
+        youtube: "https://www.youtube.com/@huyhoangnguyenvan4116",
+        tiktok: "https://www.tiktok.com/@huyhoang011004"
     }
 };
 
