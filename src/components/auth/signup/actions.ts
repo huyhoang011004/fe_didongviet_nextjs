@@ -3,6 +3,7 @@
 type FormState = {
   success: boolean;
   error: string | null;
+  email?: string;
 };
 
 export async function signupAction(
@@ -61,7 +62,7 @@ export async function signupAction(
       };
     }
 
-    return { success: true, error: null };
+    return { success: true, error: null, email };
   } catch (err) {
     console.error('Signup error:', err);
     return {

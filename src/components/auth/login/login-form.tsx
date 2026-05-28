@@ -29,13 +29,16 @@ export function LoginForm({
     error: null,
   });
 
-  // Điều hướng người dùng khi đăng nhập thành công
+  // Điều hướng người dùng khi đăng nhập thành công hoặc chưa kích hoạt
   useEffect(() => {
     if (state.success) {
-      router.push('/shop'); // Hoặc trang quản lý/trang chủ mong muốn
+      router.push('/'); // Hoặc trang quản lý/trang chủ mong muốn
       router.refresh();
+    } else if (state.unverified && state.email) {
+      const email = encodeURIComponent(state.email);
+      router.push(`/verify-otp?email=${email}&unverified=true`);
     }
-  }, [state.success, router]);
+  }, [state.success, state.unverified, state.email, router]);
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
@@ -73,7 +76,7 @@ export function LoginForm({
                 <div className='flex items-center'>
                   <FieldLabel htmlFor='password'>Password</FieldLabel>
                   <a
-                    href='#'
+                    href='/forgot-password'
                     className='ml-auto text-sm underline-offset-2 hover:underline'
                   >
                     Quên mật khẩu?

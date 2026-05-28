@@ -28,9 +28,10 @@ export function SignupForm({
 
   useEffect(() => {
     if (state.success) {
-      router.push('/login?registered=true');
+      const email = state.email ? encodeURIComponent(state.email) : '';
+      router.push(`/verify-otp?email=${email}`);
     }
-  }, [state.success, router]);
+  }, [state.success, state.email, router]);
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
