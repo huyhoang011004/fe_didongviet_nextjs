@@ -1,6 +1,6 @@
 // app/(shop)/layout.tsx
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
+import Header from '@/app/(shop)/_components/layout/header';
+import Footer from '@/app/(shop)/_components/layout/footer';
 
 export default function ShopLayout({
   children,

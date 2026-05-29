@@ -1,4 +1,4 @@
-import { LoginForm } from '@/components/auth/login/login-form';
+import { LoginForm } from '@/service/Auth/components/login/login-form';
 
 export const metadata = {
   title: 'Đăng nhập tài khoản - Di Động Việt',

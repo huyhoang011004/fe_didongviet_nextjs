@@ -1,4 +1,4 @@
-import { ForgotPasswordForm } from '@/components/auth/forgot-password/forgot-password-form';
+import { ForgotPasswordForm } from '@/service/Auth/components/forgot-password/forgot-password-form';
 
 export const metadata = {
   title: 'Quên mật khẩu - Di Động Việt',

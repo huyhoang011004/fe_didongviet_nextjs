@@ -1,4 +1,4 @@
-import { SignupForm } from '@/components/auth/signup/signup-form';
+import { SignupForm } from '@/service/Auth/components/signup/signup-form';
 
 export const metadata = {
   title: 'Đăng ký tài khoản - Di Động Việt',
