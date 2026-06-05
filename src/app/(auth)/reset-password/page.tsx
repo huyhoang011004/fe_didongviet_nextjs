@@ -1,4 +1,4 @@
-import { ResetPasswordForm } from '@/service/Auth/components/forgot-password/reset-password-form';
+import { ResetPasswordForm } from '@/app/(auth)/_components/reset-password/reset-password-form';
 import { Suspense } from 'react';
 
 export const metadata = {

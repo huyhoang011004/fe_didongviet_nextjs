@@ -4,12 +4,12 @@ import { Suspense } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '@/shared/components/ui/card';
 import { useVoucher } from './useVoucher';
-import { VoucherFilters } from '@/app/admin/_components/voucher/VoucherFilters';
-import { VoucherHeader } from '@/app/admin/_components/voucher/VoucherHeader';
-import { VoucherTable } from '@/app/admin/_components/voucher/VoucherTable';
-import { CreateVoucherModal } from '@/app/admin/_components/voucher/CreateVoucherModal';
-import { EditVoucherModal } from '@/app/admin/_components/voucher/EditVoucherModal';
-import { DeleteVoucherModal } from '@/app/admin/_components/voucher/DeleteVoucherModal';
+import { VoucherFilters } from '@/app/admin/vouchers/_voucher-components/VoucherFilters';
+import { VoucherHeader } from '@/app/admin/vouchers/_voucher-components/VoucherHeader';
+import { VoucherTable } from '@/app/admin/vouchers/_voucher-components/VoucherTable';
+import { CreateVoucherModal } from '@/app/admin/vouchers/_voucher-components/CreateVoucherModal';
+import { EditVoucherModal } from '@/app/admin/vouchers/_voucher-components/EditVoucherModal';
+import { DeleteVoucherModal } from '@/app/admin/vouchers/_voucher-components/DeleteVoucherModal';
 
 function VouchersAdminContent() {
   const {
@@ -46,7 +46,7 @@ function VouchersAdminContent() {
       {alert && (
         <div
           className={`
-            fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+            fixed bottom-5 right-5 z-[9999] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
             ${
               alert.type === 'success'
                 ? 'bg-green-50/95 border-green-200 text-green-800'

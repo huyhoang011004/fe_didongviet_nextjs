@@ -4,13 +4,13 @@ import { Suspense } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '@/shared/components/ui/card';
 import { useAccount } from './useAccount';
-import { AccountHeader } from '@/app/admin/_components/account/AccountHeader';
-import { AccountFilters } from '@/app/admin/_components/account/AccountFilters';
-import { AccountTable } from '@/app/admin/_components/account/AccountTable';
-import { CreateUserModal } from '@/app/admin/_components/account/CreateUserModal';
-import { EditUserModal } from '@/app/admin/_components/account/EditUserModal';
-import { LockUserModal } from '@/app/admin/_components/account/LockUserModal';
-import { DeleteUserModal } from '@/app/admin/_components/account/DeleteUserModal';
+import { AccountHeader } from '@/app/admin/accounts/_account-components/AccountHeader';
+import { AccountFilters } from '@/app/admin/accounts/_account-components/AccountFilters';
+import { AccountTable } from '@/app/admin/accounts/_account-components/AccountTable';
+import { CreateUserModal } from '@/app/admin/accounts/_account-components/CreateUserModal';
+import { EditUserModal } from '@/app/admin/accounts/_account-components/EditUserModal';
+import { LockUserModal } from '@/app/admin/accounts/_account-components/LockUserModal';
+import { DeleteUserModal } from '@/app/admin/accounts/_account-components/DeleteUserModal';
 
 function AccountsAdminContent() {
   const {
@@ -53,7 +53,7 @@ function AccountsAdminContent() {
       {alert && (
         <div
           className={`
-            fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+            fixed bottom-5 right-5 z-[9999] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
             ${
               alert.type === 'success'
                 ? 'bg-green-50/95 border-green-200 text-green-800'
@@ -81,6 +81,7 @@ function AccountsAdminContent() {
           usersSearch={usersSearch}
           setUsersSearch={setUsersSearch}
           setUsersPage={setUsersPage}
+          usersTotalCount={usersTotalCount}
         />
         <AccountTable
           userLoading={userLoading}

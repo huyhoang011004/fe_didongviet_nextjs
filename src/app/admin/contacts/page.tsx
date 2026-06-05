@@ -4,11 +4,11 @@ import React, { Suspense } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '@/shared/components/ui/card';
 import { useContact } from './useContact';
-import { ContactHeader } from '@/app/admin/_components/contact/ContactHeader';
-import { ContactFilters } from '@/app/admin/_components/contact/ContactFilters';
-import { ContactTable } from '@/app/admin/_components/contact/ContactTable';
-import { ContactDetailsModal } from '@/app/admin/_components/contact/ContactDetailsModal';
-import { DeleteContactModal } from '@/app/admin/_components/contact/DeleteContactModal';
+import { ContactHeader } from '@/app/admin/contacts/_contact-components/ContactHeader';
+import { ContactFilters } from '@/app/admin/contacts/_contact-components/ContactFilters';
+import { ContactTable } from '@/app/admin/contacts/_contact-components/ContactTable';
+import { ContactDetailsModal } from '@/app/admin/contacts/_contact-components/ContactDetailsModal';
+import { DeleteContactModal } from '@/app/admin/contacts/_contact-components/DeleteContactModal';
 
 function ContactsAdminContent() {
   const {
@@ -42,7 +42,7 @@ function ContactsAdminContent() {
       {alert && (
         <div
           className={`
-            fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+            fixed bottom-5 right-5 z-[9999] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
             ${
               alert.type === 'success'
                 ? 'bg-green-50/95 border-green-200 text-green-800'

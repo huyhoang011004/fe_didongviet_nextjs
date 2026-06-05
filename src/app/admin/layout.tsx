@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
   // Lấy thông tin tài khoản và phân quyền
@@ -88,6 +89,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           user={user}
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
         />
 
         {/* MAIN BODY CONTENT AREA */}

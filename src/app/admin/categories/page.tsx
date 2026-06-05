@@ -4,12 +4,12 @@ import { Suspense } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '@/shared/components/ui/card';
 import { useCategory } from './useCategory';
-import { CategoryHeader } from '@/app/admin/_components/category/CategoryHeader';
-import { CategoryFilters } from '@/app/admin/_components/category/CategoryFilters';
-import { CategoryTable } from '@/app/admin/_components/category/CategoryTable';
-import { CreateCategoryModal } from '@/app/admin/_components/category/CreateCategoryModal';
-import { EditCategoryModal } from '@/app/admin/_components/category/EditCategoryModal';
-import { DeleteCategoryModal } from '@/app/admin/_components/category/DeleteCategoryModal';
+import { CategoryHeader } from '@/app/admin/categories/_category-components/CategoryHeader';
+import { CategoryFilters } from '@/app/admin/categories/_category-components/CategoryFilters';
+import { CategoryTable } from '@/app/admin/categories/_category-components/CategoryTable';
+import { CreateCategoryModal } from '@/app/admin/categories/_category-components/CreateCategoryModal';
+import { EditCategoryModal } from '@/app/admin/categories/_category-components/EditCategoryModal';
+import { DeleteCategoryModal } from '@/app/admin/categories/_category-components/DeleteCategoryModal';
 
 function CategoriesAdminContent() {
   const {
@@ -42,7 +42,7 @@ function CategoriesAdminContent() {
       {alert && (
         <div
           className={`
-            fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+            fixed bottom-5 right-5 z-[9999] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
             ${
               alert.type === 'success'
                 ? 'bg-green-50/95 border-green-200 text-green-800'
@@ -76,6 +76,8 @@ function CategoriesAdminContent() {
           setParentFilter={setParentFilter}
           categorySearch={categorySearch}
           setCategorySearch={setCategorySearch}
+          filteredCount={filteredCategories.length}
+          totalCount={categoriesData.length}
         />
 
         {/* Bảng danh sách danh mục */}

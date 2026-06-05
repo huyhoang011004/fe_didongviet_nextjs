@@ -4,10 +4,10 @@ import React, { Suspense } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '@/shared/components/ui/card';
 import { useStudentVerification } from './useStudentVerification';
-import { StudentVerificationHeader } from '@/app/admin/_components/student-verification/StudentVerificationHeader';
-import { StudentVerificationFilters } from '@/app/admin/_components/student-verification/StudentVerificationFilters';
-import { StudentVerificationTable } from '@/app/admin/_components/student-verification/StudentVerificationTable';
-import { StudentVerificationDetailsModal } from '@/app/admin/_components/student-verification/StudentVerificationDetailsModal';
+import { StudentVerificationHeader } from '@/app/admin/student-verifications/_student-verification-components/StudentVerificationHeader';
+import { StudentVerificationFilters } from '@/app/admin/student-verifications/_student-verification-components/StudentVerificationFilters';
+import { StudentVerificationTable } from '@/app/admin/student-verifications/_student-verification-components/StudentVerificationTable';
+import { StudentVerificationDetailsModal } from '@/app/admin/student-verifications/_student-verification-components/StudentVerificationDetailsModal';
 
 function StudentVerificationsAdminContent() {
   const {
@@ -31,7 +31,7 @@ function StudentVerificationsAdminContent() {
       {alert && (
         <div
           className={`
-            fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+            fixed bottom-5 right-5 z-[9999] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
             ${
               alert.type === 'success'
                 ? 'bg-green-50/95 border-green-200 text-green-800'

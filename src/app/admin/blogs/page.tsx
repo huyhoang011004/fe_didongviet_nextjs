@@ -4,12 +4,12 @@ import React, { Suspense } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Card } from '@/shared/components/ui/card';
 import { useBlog } from './useBlog';
-import { BlogHeader } from '@/app/admin/_components/blog/BlogHeader';
-import { BlogFilters } from '@/app/admin/_components/blog/BlogFilters';
-import { BlogTable } from '@/app/admin/_components/blog/BlogTable';
-import { CreateBlogModal } from '@/app/admin/_components/blog/CreateBlogModal';
-import { EditBlogModal } from '@/app/admin/_components/blog/EditBlogModal';
-import { DeleteBlogModal } from '@/app/admin/_components/blog/DeleteBlogModal';
+import { BlogHeader } from '@/app/admin/blogs/_blog-components/BlogHeader';
+import { BlogFilters } from '@/app/admin/blogs/_blog-components/BlogFilters';
+import { BlogTable } from '@/app/admin/blogs/_blog-components/BlogTable';
+import { CreateBlogModal } from '@/app/admin/blogs/_blog-components/CreateBlogModal';
+import { EditBlogModal } from '@/app/admin/blogs/_blog-components/EditBlogModal';
+import { DeleteBlogModal } from '@/app/admin/blogs/_blog-components/DeleteBlogModal';
 
 function BlogsAdminContent() {
   const {
@@ -47,7 +47,7 @@ function BlogsAdminContent() {
       {alert && (
         <div
           className={`
-            fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+            fixed bottom-5 right-5 z-[9999] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
             ${
               alert.type === 'success'
                 ? 'bg-green-50/95 border-green-200 text-green-800'

@@ -38,8 +38,11 @@ export function useProduct() {
   const [productsSearch, setProductsSearch] = useState('');
   const [productLoading, setProductLoading] = useState(false);
 
-  // State lọc theo danh mục
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('');
+  // State lọc theo danh mục (dùng ID để hỗ trợ tìm đệ quy cả cây)
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
+
+  // State lọc theo chi nhánh
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('');
 
   // Modals state
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
@@ -80,14 +83,31 @@ export function useProduct() {
     }
   }, [alert]);
 
-  // Tải danh sách sản phẩm (hỗ trợ lọc theo danh mục)
+  // Tải danh sách sản phẩm (hỗ trợ lọc theo danh mục ID đệ quy)
   const fetchProducts = async () => {
     setProductLoading(true);
     let res;
-    if (selectedCategorySlug) {
-      res = await getProductsByCategoryAction(selectedCategorySlug, productsPage);
+    if (selectedCategoryFilter) {
+      // Tìm đệ quy trong cây danh mục để lấy slug từ ID
+      const findCatById = (cats: any[], id: string): any => {
+        for (const c of cats) {
+          if (c._id === id) return c;
+          if (c.children && c.children.length > 0) {
+            const found = findCatById(c.children, id);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      const cat = findCatById(categoriesData, selectedCategoryFilter);
+      const slug = cat ? cat.slug : '';
+      if (slug) {
+        res = await getProductsByCategoryAction(slug, productsPage);
+      } else {
+        res = await getProductsAction(productsPage, 8, productsSearch, selectedBranchFilter);
+      }
     } else {
-      res = await getProductsAction(productsPage, 8, productsSearch);
+      res = await getProductsAction(productsPage, 8, productsSearch, selectedBranchFilter);
     }
 
     if (res.success) {
@@ -103,12 +123,32 @@ export function useProduct() {
     setProductLoading(false);
   };
 
+  // Hàm làm phẳng cấu trúc cây danh mục nhận từ backend
+  const flattenCategoryTree = (nodes: any[]): any[] => {
+    const flatList: any[] = [];
+    const recurse = (node: any, parentId: string | null = null) => {
+      const { children, ...catData } = node;
+      const categoryWithParent = {
+        ...catData,
+        parentCategory: catData.parentCategory || parentId
+      };
+      flatList.push(categoryWithParent);
+      if (children && children.length > 0) {
+        children.forEach((child: any) => recurse(child, node._id));
+      }
+    };
+    nodes.forEach((node) => recurse(node));
+    return flatList;
+  };
+
   // Tải danh sách danh mục
   const fetchCategories = async () => {
     setCategoryLoading(true);
     const res = await getCategoriesAction();
     if (res.success) {
-      setCategoriesData(res.categories);
+      // Làm phẳng cây danh mục nhận từ backend
+      const flatCategories = flattenCategoryTree(res.categories);
+      setCategoriesData(flatCategories);
     } else {
       setAlert({
         type: 'error',
@@ -126,17 +166,17 @@ export function useProduct() {
     }
   };
 
-  // Trigger nạp dữ liệu khi trang thay đổi, tìm kiếm hoặc bộ lọc danh mục thay đổi
+  // Trigger nạp dữ liệu khi trang thay đổi, tìm kiếm hoặc bộ lọc thay đổi
   useEffect(() => {
     fetchProducts();
     fetchCategories();
     fetchBranches();
-  }, [productsPage, productsSearch, selectedCategorySlug]);
+  }, [productsPage, productsSearch, selectedCategoryFilter, selectedBranchFilter]);
 
-  // Reset trang về 1 khi tìm kiếm hoặc bộ lọc danh mục thay đổi
+  // Reset trang về 1 khi tìm kiếm hoặc bộ lọc thay đổi
   useEffect(() => {
     setProductsPage(1);
-  }, [productsSearch, selectedCategorySlug]);
+  }, [productsSearch, selectedCategoryFilter, selectedBranchFilter]);
 
   // Thay đổi trạng thái hiển thị Sản phẩm (Ẩn/Hiện) - Toggle thông minh
   const handleToggleProductStatus = async (id: string, currentActive: boolean) => {
@@ -231,6 +271,23 @@ export function useProduct() {
     formData.delete('variants');
     formData.append('variants', JSON.stringify(formattedVariants));
 
+    // Tách các trường tệp tin hình ảnh để append xuống cuối FormData nhằm tránh lỗi đồng bộ của Multer ở Backend
+    const imagesFiles = formData.getAll('images');
+    const variantImagesFiles = formData.getAll('variantImages');
+    formData.delete('images');
+    formData.delete('variantImages');
+
+    imagesFiles.forEach((file) => {
+      if (file instanceof File && file.size > 0) {
+        formData.append('images', file);
+      }
+    });
+    variantImagesFiles.forEach((file) => {
+      if (file instanceof File && file.size > 0) {
+        formData.append('variantImages', file);
+      }
+    });
+
     startCreateProduct(async () => {
       const res = await createProductAction(formData);
       if (res.success) {
@@ -302,6 +359,23 @@ export function useProduct() {
 
     formData.delete('variants');
     formData.append('variants', JSON.stringify(formattedVariants));
+
+    // Tách các trường tệp tin hình ảnh để append xuống cuối FormData nhằm tránh lỗi đồng bộ của Multer ở Backend
+    const imagesFiles = formData.getAll('images');
+    const variantImagesFiles = formData.getAll('variantImages');
+    formData.delete('images');
+    formData.delete('variantImages');
+
+    imagesFiles.forEach((file) => {
+      if (file instanceof File && file.size > 0) {
+        formData.append('images', file);
+      }
+    });
+    variantImagesFiles.forEach((file) => {
+      if (file instanceof File && file.size > 0) {
+        formData.append('variantImages', file);
+      }
+    });
 
     startEditProduct(async () => {
       const res = await updateProductAction(selectedProduct._id, formData);
@@ -414,8 +488,10 @@ export function useProduct() {
     productsTotalCount,
     productsSearch,
     setProductsSearch,
-    selectedCategorySlug,
-    setSelectedCategorySlug,
+    selectedCategoryFilter,
+    setSelectedCategoryFilter,
+    selectedBranchFilter,
+    setSelectedBranchFilter,
     productLoading,
     showCreateProductModal,
     setShowCreateProductModal,

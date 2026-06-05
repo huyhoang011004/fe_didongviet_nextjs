@@ -24,6 +24,7 @@ export async function GET() {
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
+    console.error('Error in GET /api/auth/me:', error);
     return NextResponse.json({ success: false, message: 'Lỗi hệ thống.' }, { status: 500 });
   }
 }
@@ -47,6 +48,7 @@ export async function PUT(request: NextRequest) {
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
+    console.error('Error in PUT /api/auth/me:', error);
     return NextResponse.json({ success: false, message: 'Lỗi hệ thống.' }, { status: 500 });
   }
 }

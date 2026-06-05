@@ -2,12 +2,12 @@
 
 import { Suspense } from 'react';
 import { useProduct } from './useProduct';
-import { ProductHeader } from '../_components/product/ProductHeader';
-import { ProductFilters } from '../_components/product/ProductFilters';
-import { ProductTable } from '../_components/product/ProductTable';
-import { CreateProductModal } from '../_components/product/CreateProductModal';
-import { EditProductModal } from '../_components/product/EditProductModal';
-import { DeleteProductModal } from '../_components/product/DeleteProductModal';
+import { ProductHeader } from './_product-components/ProductHeader';
+import { ProductFilters } from './_product-components/ProductFilters';
+import { ProductTable } from './_product-components/ProductTable';
+import { CreateProductModal } from './_product-components/CreateProductModal';
+import { EditProductModal } from './_product-components/EditProductModal';
+import { DeleteProductModal } from './_product-components/DeleteProductModal';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 function ProductsAdminContent() {
@@ -21,8 +21,10 @@ function ProductsAdminContent() {
     productsTotalCount,
     productsSearch,
     setProductsSearch,
-    selectedCategorySlug,
-    setSelectedCategorySlug,
+    selectedCategoryFilter,
+    setSelectedCategoryFilter,
+    selectedBranchFilter,
+    setSelectedBranchFilter,
     productLoading,
     showCreateProductModal,
     setShowCreateProductModal,
@@ -57,7 +59,7 @@ function ProductsAdminContent() {
       {alert && (
         <div
           className={`
-          fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+          fixed bottom-5 right-5 z-[9999] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
           ${alert.type === 'success' ? 'bg-green-50/95 border-green-200 text-green-800' : 'bg-red-50/95 border-red-200 text-red-800'}
         `}
         >
@@ -98,8 +100,11 @@ function ProductsAdminContent() {
           filteredCount={productsData.length}
           totalCount={productsTotalCount}
           categories={categoriesData}
-          selectedCategorySlug={selectedCategorySlug}
-          onCategorySelect={setSelectedCategorySlug}
+          selectedCategoryFilter={selectedCategoryFilter}
+          onCategorySelect={setSelectedCategoryFilter}
+          branches={branchesData}
+          selectedBranchFilter={selectedBranchFilter}
+          onBranchSelect={setSelectedBranchFilter}
         />
 
         <ProductTable
@@ -120,6 +125,8 @@ function ProductsAdminContent() {
             setShowDeleteProductModal(true);
           }}
           currentUserRole={currentUser?.role}
+          selectedBranchFilter={selectedBranchFilter}
+          branches={branchesData}
         />
       </div>
 

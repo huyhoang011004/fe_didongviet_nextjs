@@ -20,6 +20,7 @@ export interface Category {
   name: string;
   slug?: string;
   parentCategory?: string | Category | null;
+  ancestors?: Array<string | Category>;
   image?: string;
   description?: string;
   brands?: string[];

@@ -66,12 +66,33 @@ export function useCategory() {
     }
   }, [alert]);
 
+  // Hàm làm phẳng cấu trúc cây danh mục nhận từ backend
+  const flattenCategoryTree = (nodes: any[]): Category[] => {
+    const flatList: Category[] = [];
+    const recurse = (node: any, parentId: string | null = null) => {
+      const { children, ...catData } = node;
+      // Gán parentCategory nếu chưa có để đảm bảo frontend biết danh mục cha
+      const categoryWithParent = {
+        ...catData,
+        parentCategory: catData.parentCategory || parentId
+      };
+      flatList.push(categoryWithParent);
+      if (children && children.length > 0) {
+        children.forEach((child: any) => recurse(child, node._id));
+      }
+    };
+    nodes.forEach((node) => recurse(node));
+    return flatList;
+  };
+
   // Nạp danh sách danh mục từ database
   const fetchCategories = async () => {
     setCategoryLoading(true);
     const res = await getCategoriesAction();
     if (res.success) {
-      setCategoriesData(res.categories);
+      // Làm phẳng cây danh mục trước khi lưu vào state để frontend xử lý phẳng & dựng cây chủ động
+      const flatCategories = flattenCategoryTree(res.categories);
+      setCategoriesData(flatCategories);
     } else {
       setAlert({
         type: 'error',
@@ -103,7 +124,13 @@ export function useCategory() {
     if (parentFilter === 'root') {
       matchesParent = !pId;
     } else if (parentFilter !== 'all') {
-      matchesParent = pId === parentFilter;
+      // Kiểm tra trực tiếp xem danh mục này hoặc tổ tiên của nó có trùng với parentFilter không
+      matchesParent =
+        c._id === parentFilter ||
+        (c.ancestors ? c.ancestors.some((a: any) => {
+          const aId = typeof a === 'object' ? a._id : a;
+          return aId === parentFilter;
+        }) : false);
     }
 
     return matchesSearch && matchesParent;
@@ -121,6 +148,7 @@ export function useCategory() {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       parentCategory: (formData.get('parentCategory') as string) || null,
+      image: (formData.get('image') as string) || null,
       brands: brandsRaw ? brandsRaw.split(',').map((b) => b.trim()) : [],
       displayOrder: parseInt(formData.get('displayOrder') as string) || 0,
       isActive: formData.get('isActive') === 'true',
@@ -151,6 +179,7 @@ export function useCategory() {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       parentCategory: (formData.get('parentCategory') as string) || null,
+      image: (formData.get('image') as string) || null,
       brands: brandsRaw ? brandsRaw.split(',').map((b) => b.trim()) : [],
       displayOrder: parseInt(formData.get('displayOrder') as string) || 0,
       isActive: formData.get('isActive') === 'true',

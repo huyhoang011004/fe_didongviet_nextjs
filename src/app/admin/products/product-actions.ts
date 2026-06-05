@@ -6,6 +6,7 @@ export async function getProductsAction(
   page: number = 1,
   limit: number = 8,
   search: string = '',
+  branchId: string = '',
 ): Promise<{
   success: boolean;
   currentPage: number;
@@ -15,11 +16,13 @@ export async function getProductsAction(
   message?: string;
 }> {
   try {
-    const query = new URLSearchParams({
+    const queryParams: Record<string, string> = {
       page: page.toString(),
       limit: limit.toString(),
       search,
-    });
+    };
+    if (branchId) queryParams.branchId = branchId;
+    const query = new URLSearchParams(queryParams);
 
     const response = await fetch(`${getApiUrl()}/products?${query}`, {
       method: 'GET',
