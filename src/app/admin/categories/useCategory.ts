@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/service/Account/accountService';
+import { getCurrentUser } from '@/shared/service/accountService';
 import { User } from '@/types/auth';
 import { Category } from '@/types/product';
 import {
@@ -74,7 +74,7 @@ export function useCategory() {
       // Gán parentCategory nếu chưa có để đảm bảo frontend biết danh mục cha
       const categoryWithParent = {
         ...catData,
-        parentCategory: catData.parentCategory || parentId
+        parentCategory: catData.parentCategory || parentId,
       };
       flatList.push(categoryWithParent);
       if (children && children.length > 0) {
@@ -127,10 +127,12 @@ export function useCategory() {
       // Kiểm tra trực tiếp xem danh mục này hoặc tổ tiên của nó có trùng với parentFilter không
       matchesParent =
         c._id === parentFilter ||
-        (c.ancestors ? c.ancestors.some((a: any) => {
-          const aId = typeof a === 'object' ? a._id : a;
-          return aId === parentFilter;
-        }) : false);
+        (c.ancestors
+          ? c.ancestors.some((a: any) => {
+            const aId = typeof a === 'object' ? a._id : a;
+            return aId === parentFilter;
+          })
+          : false);
     }
 
     return matchesSearch && matchesParent;

@@ -109,7 +109,7 @@ export default function NewsPage() {
               >
                 {/* Thumbnail */}
                 <Link
-                  href={`/news/${blog.slug}`}
+                  href={`/blogs/${blog.slug}`}
                   className='relative aspect-[16/9] overflow-hidden block bg-slate-100'
                 >
                   <img
@@ -138,7 +138,7 @@ export default function NewsPage() {
                   </div>
 
                   <Link
-                    href={`/news/${blog.slug}`}
+                    href={`/blogs/${blog.slug}`}
                     className='block group-hover:text-didongviet-red transition-colors'
                   >
                     <h3 className='text-sm font-black text-slate-800 leading-snug mb-2 line-clamp-2'>
@@ -155,7 +155,7 @@ export default function NewsPage() {
                     variant='ghost'
                     className='w-full justify-between px-0 h-auto font-bold text-xs text-didongviet-red hover:text-didongviet-dark-red hover:bg-transparent'
                   >
-                    <Link href={`/news/${blog.slug}`}>
+                    <Link href={`/blogs/${blog.slug}`}>
                       <span>Xem chi tiết</span>
                       <ArrowRight
                         size={14}

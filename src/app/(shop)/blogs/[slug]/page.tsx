@@ -12,6 +12,7 @@ export default function NewsDetailPage() {
   const slug = params.slug as string;
 
   const [blog, setBlog] = useState<any>(null);
+  const [relatedBlogs, setRelatedBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +27,21 @@ export default function NewsDetailPage() {
           const data = await res.json();
           if (data.success) {
             setBlog(data.data);
+            
+            // Lấy bài viết liên quan
+            if (data.data.category && data.data._id) {
+              try {
+                const relRes = await fetch(`${apiUrl}/blogs/related?category=${encodeURIComponent(data.data.category)}&currentId=${data.data._id}`);
+                if (relRes.ok) {
+                  const relData = await relRes.json();
+                  if (relData.success) {
+                    setRelatedBlogs(relData.data || []);
+                  }
+                }
+              } catch (e) {
+                console.error("Failed to load related blogs:", e);
+              }
+            }
           }
         }
       } catch (err) {
@@ -63,7 +79,7 @@ export default function NewsDetailPage() {
           Bài viết bạn đang tìm kiếm có thể đã bị xóa hoặc URL không chính xác.
         </p>
         <Button
-          onClick={() => router.push('/news')}
+          onClick={() => router.push('/blogs')}
           className='bg-didongviet-red text-white text-xs font-bold rounded-xl h-9'
         >
           <ArrowLeft size={14} className='mr-1.5' /> Về trang Tin Tức
@@ -85,7 +101,7 @@ export default function NewsDetailPage() {
           </Link>
           <ChevronRight size={10} />
           <Link
-            href='/news'
+            href='/blogs'
             className='hover:text-didongviet-red transition-colors'
           >
             Tin tức
@@ -129,7 +145,7 @@ export default function NewsDetailPage() {
 
         {/* CONTENT */}
         <article
-          className='prose prose-sm sm:prose-base prose-slate max-w-none mb-10 prose-img:rounded-xl prose-img:w-full prose-img:object-cover prose-headings:font-black prose-a:text-didongviet-red'
+          className='prose prose-sm sm:prose-base prose-slate max-w-none mb-10 prose-img:rounded-xl prose-img:w-full prose-img:object-cover prose-headings:font-black prose-a:text-didongviet-red [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-xl [&_video]:w-full [&_video]:rounded-xl'
           dangerouslySetInnerHTML={{ __html: blog.content }}
         />
 
@@ -150,6 +166,30 @@ export default function NewsDetailPage() {
           </div>
         )}
       </main>
+
+      {/* RELATED BLOGS */}
+      {relatedBlogs && relatedBlogs.length > 0 && (
+        <section className='max-w-3xl mx-auto px-4 mt-8'>
+          <h3 className='text-lg font-black text-slate-800 uppercase mb-4 border-l-4 border-didongviet-red pl-3'>
+            Bài viết liên quan
+          </h3>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+            {relatedBlogs.map((related: any) => (
+              <Link key={related._id} href={`/blogs/${related.slug}`} className='bg-white rounded-xl border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group flex items-start gap-3 p-3'>
+                <div className='w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-100'>
+                  <img src={related.featuredImage || '/placeholder-product.png'} alt={related.title} className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500' />
+                </div>
+                <div className='flex-1 py-1'>
+                  <h4 className='text-xs font-bold text-slate-800 line-clamp-2 group-hover:text-didongviet-red transition-colors mb-1.5 leading-snug'>{related.title}</h4>
+                  <div className='text-[10px] text-slate-400 font-semibold flex items-center gap-1.5'>
+                    <Clock size={10} /> {new Date(related.createdAt).toLocaleDateString('vi-VN')}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

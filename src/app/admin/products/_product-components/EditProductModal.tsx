@@ -13,6 +13,11 @@ interface EditProductModalProps {
   variants: any[];
   setVariants: React.Dispatch<React.SetStateAction<any[]>>;
   pending: boolean;
+  mediaLoading?: boolean;
+  onReplaceImage?: (imageId: string, file: File) => void;
+  onDeleteImage?: (imageId: string) => void;
+  onSetThumbnail?: (imageId: string) => void;
+  onReorderImages?: (orders: Array<{ imageId: string; order: number }>) => void;
 }
 
 export function EditProductModal({
@@ -25,6 +30,11 @@ export function EditProductModal({
   variants,
   setVariants,
   pending,
+  mediaLoading,
+  onReplaceImage,
+  onDeleteImage,
+  onSetThumbnail,
+  onReorderImages,
 }: EditProductModalProps) {
   if (!isOpen) return null;
 

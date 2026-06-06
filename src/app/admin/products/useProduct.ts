@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/service/Account/accountService';
+import { getCurrentUser } from '@/shared/service/accountService';
 import { User } from '@/types/auth';
 import {
   getProductsAction,
@@ -39,7 +39,8 @@ export function useProduct() {
   const [productLoading, setProductLoading] = useState(false);
 
   // State lọc theo danh mục (dùng ID để hỗ trợ tìm đệ quy cả cây)
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] =
+    useState<string>('');
 
   // State lọc theo chi nhánh
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('');
@@ -104,10 +105,20 @@ export function useProduct() {
       if (slug) {
         res = await getProductsByCategoryAction(slug, productsPage);
       } else {
-        res = await getProductsAction(productsPage, 8, productsSearch, selectedBranchFilter);
+        res = await getProductsAction(
+          productsPage,
+          8,
+          productsSearch,
+          selectedBranchFilter,
+        );
       }
     } else {
-      res = await getProductsAction(productsPage, 8, productsSearch, selectedBranchFilter);
+      res = await getProductsAction(
+        productsPage,
+        8,
+        productsSearch,
+        selectedBranchFilter,
+      );
     }
 
     if (res.success) {
@@ -130,7 +141,7 @@ export function useProduct() {
       const { children, ...catData } = node;
       const categoryWithParent = {
         ...catData,
-        parentCategory: catData.parentCategory || parentId
+        parentCategory: catData.parentCategory || parentId,
       };
       flatList.push(categoryWithParent);
       if (children && children.length > 0) {
@@ -171,7 +182,12 @@ export function useProduct() {
     fetchProducts();
     fetchCategories();
     fetchBranches();
-  }, [productsPage, productsSearch, selectedCategoryFilter, selectedBranchFilter]);
+  }, [
+    productsPage,
+    productsSearch,
+    selectedCategoryFilter,
+    selectedBranchFilter,
+  ]);
 
   // Reset trang về 1 khi tìm kiếm hoặc bộ lọc thay đổi
   useEffect(() => {
@@ -179,7 +195,10 @@ export function useProduct() {
   }, [productsSearch, selectedCategoryFilter, selectedBranchFilter]);
 
   // Thay đổi trạng thái hiển thị Sản phẩm (Ẩn/Hiện) - Toggle thông minh
-  const handleToggleProductStatus = async (id: string, currentActive: boolean) => {
+  const handleToggleProductStatus = async (
+    id: string,
+    currentActive: boolean,
+  ) => {
     let res;
     if (currentActive) {
       // Đang hiển thị -> Ẩn (xóa mềm)
@@ -192,7 +211,10 @@ export function useProduct() {
     }
 
     if (res.success) {
-      setAlert({ type: 'success', message: 'Cập nhật trạng thái sản phẩm thành công!' });
+      setAlert({
+        type: 'success',
+        message: 'Cập nhật trạng thái sản phẩm thành công!',
+      });
       fetchProducts();
     } else {
       setAlert({ type: 'error', message: res.message });
@@ -263,7 +285,9 @@ export function useProduct() {
             ? parseFloat(salePriceInput.value)
             : undefined,
         sku: skuInput ? skuInput.value : v.sku,
-        variantImage: variantImageInput ? variantImageInput.value : v.variantImage || null,
+        variantImage: variantImageInput
+          ? variantImageInput.value
+          : v.variantImage || null,
         inventory,
       };
     });
@@ -352,7 +376,9 @@ export function useProduct() {
             ? parseFloat(salePriceInput.value)
             : undefined,
         sku: skuInput ? skuInput.value : v.sku,
-        variantImage: variantImageInput ? variantImageInput.value : v.variantImage || null,
+        variantImage: variantImageInput
+          ? variantImageInput.value
+          : v.variantImage || null,
         inventory,
       };
     });

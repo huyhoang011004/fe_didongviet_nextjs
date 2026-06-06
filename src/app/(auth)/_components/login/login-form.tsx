@@ -11,9 +11,10 @@ import {
   FieldSeparator,
 } from '@/shared/components/ui/field';
 import { Input } from '@/shared/components/ui/input';
+import { Eye, EyeOff } from 'lucide-react';
 
 // Import thêm hooks và action
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginAction } from './actions';
 import Script from 'next/script';
@@ -23,6 +24,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<'div'>) {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   // Khởi tạo state lắng nghe Server Action
   const [state, formAction, isPending] = useActionState(loginAction, {
@@ -97,13 +99,23 @@ export function LoginForm({
                     Quên mật khẩu?
                   </a>
                 </div>
-                <Input
-                  id='password'
-                  name='password' // THÊM THUỘC TÍNH NAME
-                  type='password'
-                  disabled={isPending}
-                  required
-                />
+                <div className='relative'>
+                  <Input
+                    id='password'
+                    name='password' // THÊM THUỘC TÍNH NAME
+                    type={showPassword ? 'text' : 'password'}
+                    disabled={isPending}
+                    className='pr-10'
+                    required
+                  />
+                  <button
+                    type='button'
+                    onClick={() => setShowPassword(!showPassword)}
+                    className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center'
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </Field>
               <Field>
                 {/* THAY ĐỔI UI NÚT SUBMIT THEO TRẠNG THÁI PENDING */}

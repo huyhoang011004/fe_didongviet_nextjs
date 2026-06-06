@@ -33,3 +33,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const headers = await getAuthHeaders();
+    if (!headers) {
+      return NextResponse.json({ success: false, message: 'Chưa đăng nhập.' }, { status: 401 });
+    }
+
+    const res = await fetch(`${API_URL}/orders/myorders`, {
+      method: 'GET',
+      headers,
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Đã có lỗi xảy ra.';
+    return NextResponse.json({ success: false, message }, { status: 500 });
+  }
+}

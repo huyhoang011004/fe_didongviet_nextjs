@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { getCurrentUser } from '@/service/Account/accountService';
+import { getCurrentUser } from '@/shared/service/accountService';
 import { User } from '@/types/auth';
 import { Blog } from '@/types/blog';
 import {

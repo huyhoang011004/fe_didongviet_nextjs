@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { getCurrentUser } from '@/service/Account/accountService';
+import { getCurrentUser } from '@/shared/service/accountService';
 import { User } from '@/types/auth';
 import { StudentProfile } from '@/types/student';
 import {
@@ -25,7 +25,9 @@ export function useStudentVerification() {
 
   // Modals state
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<StudentProfile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<StudentProfile | null>(
+    null,
+  );
 
   const [verifyPending, startVerify] = useTransition();
 
@@ -101,7 +103,8 @@ export function useStudentVerification() {
       if (res.success) {
         setAlert({
           type: 'success',
-          message: res.message + (res.instruction ? ` (${res.instruction})` : ''),
+          message:
+            res.message + (res.instruction ? ` (${res.instruction})` : ''),
         });
         setShowDetailsModal(false);
         fetchPendingProfiles();

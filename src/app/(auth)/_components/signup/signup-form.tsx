@@ -10,8 +10,9 @@ import {
   FieldLabel,
 } from '@/shared/components/ui/field';
 import { Input } from '@/shared/components/ui/input';
+import { Eye, EyeOff } from 'lucide-react';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signupAction } from './actions';
 
@@ -20,6 +21,8 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<'div'>) {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [state, formAction, isPending] = useActionState(signupAction, {
     success: false,
@@ -98,25 +101,45 @@ export function SignupForm({
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                 <Field>
                   <FieldLabel htmlFor='password'>Mật khẩu</FieldLabel>
-                  <Input
-                    id='password'
-                    name='password'
-                    type='password'
-                    disabled={isPending}
-                    required
-                  />
+                  <div className='relative'>
+                    <Input
+                      id='password'
+                      name='password'
+                      type={showPassword ? 'text' : 'password'}
+                      disabled={isPending}
+                      className='pr-10'
+                      required
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setShowPassword(!showPassword)}
+                      className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center'
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor='confirm-password'>
                     Xác nhận mật khẩu
                   </FieldLabel>
-                  <Input
-                    id='confirm-password'
-                    name='confirmPassword'
-                    type='password'
-                    disabled={isPending}
-                    required
-                  />
+                  <div className='relative'>
+                    <Input
+                      id='confirm-password'
+                      name='confirmPassword'
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      disabled={isPending}
+                      className='pr-10'
+                      required
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center'
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </Field>
               </div>
               <FieldDescription>

@@ -1,4 +1,4 @@
-﻿import {
+import {
   CONTACT_INFO,
   MENU_CATEGORIES,
   CUSTOMER_SERVICES,
@@ -16,7 +16,7 @@ import {
 export default function Footer() {
   return (
     <footer className='bg-gray-50 border-t border-gray-200'>
-      <div className='container mx-auto px-4 py-12'>
+      <div className='max-w-[1400px] mx-auto px-[30px] py-12'>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8'>
           <div>
             <h3 className='text-sm font-semibold uppercase tracking-widest text-gray-900 mb-4'>

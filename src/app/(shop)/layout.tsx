@@ -10,8 +10,9 @@ export default function ShopLayout({
   return (
     <>
       <Header />
-      {/* Phần main bọc riêng nội dung của các trang mua sắm */}
-      <main className='flex-1 overflow-x-hidden'>{children}</main>
+      <main className='flex-1 overflow-x-hidden pt-[100px] md:pt-[110px]'>
+        {children}
+      </main>
       <Footer />
     </>
   );

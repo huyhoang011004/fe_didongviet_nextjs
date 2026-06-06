@@ -6,22 +6,32 @@ import Link from 'next/link';
 import {
   ShoppingBag,
   Trash2,
-  Plus,
-  Minus,
   ChevronRight,
   Ticket,
   ShieldCheck,
   Truck,
   RotateCw,
   ArrowRight,
-  X,
   CheckCircle,
   AlertCircle,
-  Loader2,
-  Package,
+  FileText,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
+import { useCartStore } from '@/app/(shop)/cart/useCartStore';
+import CartItem from './_components/CartItem';
+import VoucherList from './_components/VoucherList';
+import CartSEOAndFAQ from './_components/CartSEOAndFAQ';
+import {
+  fetchVouchers,
+  findVoucherByCode,
+  calcVoucherValue,
+  applyVoucherServer,
+} from './cart-actions';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 const formatVND = (num: number) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -30,37 +40,31 @@ const formatVND = (num: number) => {
   }).format(num);
 };
 
-interface CartItem {
-  product: {
-    _id: string;
-    name: string;
-    images?: { url: string; isThumbnail?: boolean }[];
-  };
-  variantId: string;
-  quantity: number;
-  selectedColor: string;
-  selectedStorage: string;
-  price: number;
-}
-
-interface CartData {
-  items: CartItem[];
-  totalPrice: number;
-  discountAmount: number;
-  finalPrice: number;
-  appliedVoucher: string | null;
-}
-
 export default function CartPage() {
   const router = useRouter();
-  const [cart, setCart] = useState<CartData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState<string | null>(null); // variantId being updated
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  // Voucher
+  // Local SEO & FAQ states
+  const [showFullSeo, setShowFullSeo] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
+  // Zustand Store
+  const cartItems = useCartStore((state) => state.items);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const removeItem = useCartStore((state) => state.removeItem);
+  const selected = useCartStore((state) => state.selected);
+  const toggleSelectItem = useCartStore((state) => state.toggleSelectItem);
+  const setSelectedItems = useCartStore((state) => state.setSelectedItems);
+  const fetchCart = useCartStore((state) => state.fetchCart);
+
+  // Voucher state
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherLoading, setVoucherLoading] = useState(false);
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  const [appliedVoucher, setAppliedVoucher] = useState<any | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [bestVoucherCode, setBestVoucherCode] = useState<string | null>(null);
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
 
   // Alert
   const [alert, setAlert] = useState<{
@@ -69,151 +73,341 @@ export default function CartPage() {
   } | null>(null);
 
   useEffect(() => {
+    setMounted(true);
+    fetchCart();
+  }, [fetchCart]);
+
+  // Load vouchers từ backend
+  useEffect(() => {
+    const load = async () => {
+      const list = await fetchVouchers();
+      setVouchers(list);
+    };
+    load();
+  }, []);
+
+  // Các sản phẩm được chọn
+  const selectedItems = cartItems.filter((item) =>
+    selected.includes(`${item.product}|${item.variant}`),
+  );
+
+  // Tính tổng tiền tạm tính cho các sản phẩm đã chọn
+  const selectedTotalPrice = selectedItems.reduce(
+    (sum, item) => sum + (item.salePrice || item.price) * item.quantity,
+    0,
+  );
+
+  // Tính chất tự động áp dụng và tính lại giá trị Voucher dựa trên các sản phẩm ĐÃ CHỌN
+  useEffect(() => {
+    if (!vouchers || vouchers.length === 0) return;
+    const total = selectedTotalPrice;
+
+    const calcValue = (v: any) => {
+      return calcVoucherValue(v, total);
+    };
+
+    const applicable = vouchers
+      .map((v) => ({ ...v, _value: calcValue(v) }))
+      .filter((v) => v._value !== null && v._value > 0)
+      .sort((a, b) => b._value - a._value);
+
+    if (applicable.length > 0) {
+      const best = applicable[0];
+      setBestVoucherCode(best.code);
+      if (!appliedVoucher) {
+        setAppliedVoucher(best);
+        setDiscountAmount(best._value);
+      } else {
+        const currentVal = calcValue(appliedVoucher);
+        if (currentVal === null || currentVal === 0) {
+          // Mã cũ không còn đạt điều kiện áp dụng -> tự động đổi sang mã tốt nhất mới
+          setAppliedVoucher(best);
+          setDiscountAmount(best._value);
+        } else {
+          setDiscountAmount(currentVal);
+          if (currentVal < best._value) {
+            setBestVoucherCode(best.code);
+          }
+        }
+      }
+    } else {
+      setBestVoucherCode(null);
+      setAppliedVoucher(null);
+      setDiscountAmount(0);
+    }
+  }, [vouchers, cartItems, selected]);
+
+  useEffect(() => {
     if (alert) {
       const timer = setTimeout(() => setAlert(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [alert]);
 
-  // Tải giỏ hàng
-  const fetchCart = async () => {
-    try {
-      const res = await fetch('/api/cart');
-      if (res.status === 401) {
-        setIsLoggedIn(false);
-        setLoading(false);
-        return;
-      }
-      const data = await res.json();
-      if (data.success) {
-        setCart(data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch cart:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
-  // Cập nhật số lượng
   const handleUpdateQty = async (
     productId: string,
     variantId: string,
-    quantity: number,
+    qty: number,
   ) => {
-    if (quantity < 1) return;
-    setUpdating(variantId);
-    try {
-      const res = await fetch('/api/cart', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, variantId, quantity }),
+    if (qty < 1) return;
+    const success = await updateQuantity(productId, variantId, qty);
+    if (!success) {
+      setAlert({
+        type: 'error',
+        message: 'Không thể cập nhật số lượng (Vượt quá tồn kho)',
       });
-      const data = await res.json();
-      if (data.success) {
-        setCart(data.data);
-      } else {
-        setAlert({
-          type: 'error',
-          message: data.message || 'Không thể cập nhật',
-        });
-      }
-    } catch (err) {
-      setAlert({ type: 'error', message: 'Lỗi kết nối' });
-    } finally {
-      setUpdating(null);
     }
   };
 
-  // Xóa item
   const handleRemoveItem = async (productId: string, variantId: string) => {
-    setUpdating(variantId);
-    try {
-      const res = await fetch(`/api/cart/${productId}/${variantId}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCart(data.data);
-        setAlert({ type: 'success', message: 'Đã xóa sản phẩm khỏi giỏ hàng' });
-      } else {
-        setAlert({ type: 'error', message: data.message || 'Không thể xóa' });
-      }
-    } catch (err) {
-      setAlert({ type: 'error', message: 'Lỗi kết nối' });
-    } finally {
-      setUpdating(null);
+    const success = await removeItem(productId, variantId);
+    if (success) {
+      setAlert({ type: 'success', message: 'Đã xóa sản phẩm khỏi giỏ hàng' });
+    } else {
+      setAlert({ type: 'error', message: 'Lỗi khi xóa sản phẩm' });
     }
   };
 
-  // Áp dụng voucher
-  const handleApplyVoucher = async () => {
-    if (!voucherCode.trim()) return;
+  // Chọn/bỏ chọn tất cả sản phẩm
+  const allKeys = cartItems.map((item) => `${item.product}|${item.variant}`);
+  const isAllSelected =
+    cartItems.length > 0 && selected.length === cartItems.length;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(allKeys);
+    }
+  };
+
+  // Xóa các sản phẩm đã chọn
+  const handleRemoveSelected = async () => {
+    if (selected.length === 0) {
+      setAlert({
+        type: 'error',
+        message: 'Vui lòng chọn ít nhất 1 sản phẩm để xóa',
+      });
+      return;
+    }
+    const confirmDelete = window.confirm(
+      `Bạn có chắc chắn muốn xóa ${selected.length} sản phẩm đã chọn?`,
+    );
+    if (!confirmDelete) return;
+
     setVoucherLoading(true);
     try {
-      const res = await fetch('/api/cart/apply-voucher', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voucherCode: voucherCode.trim() }),
-      });
-      const data = await res.json();
-      if (data.success) {
+      let successCount = 0;
+      for (const key of selected) {
+        const [prodId, varId] = key.split('|');
+        const success = await removeItem(prodId, varId);
+        if (success) successCount++;
+      }
+      if (successCount > 0) {
+        setSelectedItems([]);
         setAlert({
           type: 'success',
-          message: data.message || 'Áp dụng mã thành công!',
+          message: `Đã xóa thành công ${successCount} sản phẩm`,
         });
-        // Reload cart to get updated prices
-        await fetchCart();
-        setVoucherCode('');
-      } else {
-        setAlert({ type: 'error', message: data.message || 'Mã không hợp lệ' });
       }
     } catch (err) {
-      setAlert({ type: 'error', message: 'Lỗi kết nối' });
+      console.error(err);
+      setAlert({ type: 'error', message: 'Lỗi khi xóa các sản phẩm đã chọn' });
     } finally {
       setVoucherLoading(false);
     }
   };
 
-  // Chưa đăng nhập
-  if (!isLoggedIn) {
-    return (
-      <div className='min-h-screen bg-slate-50 font-sans flex flex-col items-center justify-center p-8 text-center'>
-        <div className='h-16 w-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-4'>
-          <ShoppingBag size={28} />
-        </div>
-        <h2 className='text-base font-black text-slate-800 uppercase'>
-          Bạn cần đăng nhập
-        </h2>
-        <p className='text-[11px] text-gray-500 max-w-sm mt-1 mb-5 leading-relaxed'>
-          Vui lòng đăng nhập tài khoản Di Động Việt để xem và quản lý giỏ hàng
-          của bạn.
-        </p>
-        <div className='flex gap-3'>
-          <Button
-            onClick={() => router.push('/login')}
-            className='bg-didongviet-red hover:bg-didongviet-dark-red text-white py-2.5 px-6 text-xs font-bold rounded-xl border-none shadow-sm'
-          >
-            Đăng nhập
-          </Button>
-          <Button
-            onClick={() => router.push('/signup')}
-            variant='outline'
-            className='py-2.5 px-6 text-xs font-bold rounded-xl border-slate-200'
-          >
-            Đăng ký
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+    setVoucherLoading(true);
+    try {
+      const code = voucherCode.toUpperCase();
+      const srv = await applyVoucherServer(code);
+      if (srv.status === 200 && srv.data && srv.data.success) {
+        const payload = srv.data.data || srv.data;
+        setAppliedVoucher({ code: payload.voucherCode || code });
+        setDiscountAmount(payload.discountAmount || 0);
+        setAlert({ type: 'success', message: 'Áp dụng mã thành công!' });
+        setVoucherCode('');
+        setShowVoucherModal(false);
+        return;
+      }
 
-  // Loading
-  if (loading) {
+      if (srv.status === 401) {
+        const result = await findVoucherByCode(code, selectedTotalPrice);
+        if (!result || !result.voucher) {
+          setAlert({
+            type: 'error',
+            message: 'Mã không hợp lệ hoặc đã hết hạn',
+          });
+          return;
+        }
+        if (!result.value || result.value <= 0) {
+          setAlert({
+            type: 'error',
+            message: 'Mã chưa đạt điều kiện áp dụng cho các sản phẩm đã chọn',
+          });
+          return;
+        }
+        setAppliedVoucher(result.voucher);
+        setDiscountAmount(result.value);
+        setAlert({
+          type: 'success',
+          message: 'Áp dụng mã (tạm tính) thành công!',
+        });
+        setVoucherCode('');
+        setShowVoucherModal(false);
+        return;
+      }
+
+      const msg = srv.data?.message || 'Mã không hợp lệ hoặc đã hết hạn';
+      setAlert({ type: 'error', message: msg });
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Lỗi khi kiểm tra mã giảm giá' });
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const applyVoucherByCode = async (code: string) => {
+    setVoucherLoading(true);
+    try {
+      const srv = await applyVoucherServer(code);
+      if (srv.status === 200 && srv.data && srv.data.success) {
+        const payload = srv.data.data || srv.data;
+        setAppliedVoucher({ code: payload.voucherCode || code });
+        setDiscountAmount(payload.discountAmount || 0);
+        setAlert({ type: 'success', message: 'Áp dụng mã thành công!' });
+        setShowVoucherModal(false);
+        return;
+      }
+
+      if (srv.status === 401) {
+        // Fallback offline cho khách vãng lai
+        const result = await findVoucherByCode(code, selectedTotalPrice);
+        if (result && result.voucher && result.value > 0) {
+          setAppliedVoucher(result.voucher);
+          setDiscountAmount(result.value);
+          setAlert({
+            type: 'success',
+            message: 'Áp dụng mã giảm giá thành công!',
+          });
+          setShowVoucherModal(false);
+        } else {
+          setAlert({
+            type: 'error',
+            message:
+              'Mã giảm giá này chưa đạt điều kiện tối thiểu của đơn hàng đã chọn',
+          });
+        }
+        return;
+      }
+
+      setAlert({
+        type: 'error',
+        message: srv.data?.message || 'Không thể áp dụng mã',
+      });
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Lỗi khi áp dụng mã' });
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const handleChangeVariant = async (
+    productId: string,
+    oldVariantId: string,
+    newVariantId: string,
+    quantity: number,
+  ) => {
+    if (oldVariantId === newVariantId) return;
+
+    setVoucherLoading(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/products/${productId}`,
+      ).then((r) => r.json());
+      if (res && res.success && res.data) {
+        const product = res.data;
+        const newVariant = product.variants.find(
+          (v: any) => v._id === newVariantId,
+        );
+        if (newVariant) {
+          const thumbnail =
+            newVariant.variantImage ||
+            product.images?.find((img: any) => img.isThumbnail)?.url ||
+            product.imageUrl ||
+            '/placeholder-product.png';
+
+          const itemDetails = {
+            imageUrl: thumbnail.startsWith('http')
+              ? thumbnail
+              : `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'}${thumbnail}`,
+            price: newVariant.price,
+            salePrice: newVariant.salePrice || newVariant.price,
+            selectedColor: newVariant.color,
+            selectedStorage:
+              newVariant.ram && newVariant.rom
+                ? `${newVariant.ram}/${newVariant.rom}`
+                : newVariant.storage || '',
+          };
+
+          const success = await useCartStore.getState().changeVariant(
+            productId,
+            oldVariantId,
+            newVariantId,
+            quantity,
+            itemDetails,
+          );
+
+          if (success) {
+            // Đồng bộ trạng thái tích chọn key selection
+            const oldKey = `${productId}|${oldVariantId}`;
+            const newKey = `${productId}|${newVariantId}`;
+            if (selected.includes(oldKey)) {
+              setSelectedItems([
+                ...selected.filter((k) => k !== oldKey),
+                newKey,
+              ]);
+            }
+
+            setAlert({
+              type: 'success',
+              message: 'Đã đổi phân loại thành công!',
+            });
+          } else {
+            setAlert({
+              type: 'error',
+              message: 'Không thể đổi phân loại mới (Vượt quá tồn kho)',
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to change variant:', err);
+      setAlert({ type: 'error', message: 'Lỗi hệ thống khi đổi phân loại' });
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const handleCheckout = () => {
+    if (!selected || selected.length === 0) {
+      setAlert({
+        type: 'error',
+        message: 'Vui lòng chọn ít nhất 1 sản phẩm để thanh toán',
+      });
+      return;
+    }
+    router.push('/checkout');
+  };
+
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex((prev) => (prev === index ? null : index));
+  };
+
+  if (!mounted) {
     return (
       <div className='min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8'>
         <div className='relative flex items-center justify-center'>
@@ -229,18 +423,66 @@ export default function CartPage() {
     );
   }
 
-  const items = cart?.items || [];
-  const isEmpty = items.length === 0;
+  const isEmpty = cartItems.length === 0;
+  const finalPrice = Math.max(0, selectedTotalPrice - discountAmount);
+
+  // Helper để VoucherList hiển thị giá trị quy đổi của mã
+  const calcV = (v: any) => {
+    return calcVoucherValue(v, selectedTotalPrice);
+  };
+
+  const applicableVouchers = (vouchers || [])
+    .map((v) => ({ ...v, _value: calcVoucherValue(v, selectedTotalPrice) }))
+    .filter((v) => v._value !== null && v._value > 0)
+    .sort((a, b) => b._value - a._value);
+
+  // Nội dung SEO bài viết mẫu
+  const seoContent = {
+    seoTitle: 'Quy trình thanh toán & Mua sắm an toàn tại Di Động Việt',
+    toc: [
+      '1. Giới thiệu chính sách giỏ hàng',
+      '2. Quyền lợi khách hàng và D.Member',
+      '3. Phương thức thanh toán linh hoạt',
+      '4. Cam kết bảo hành, đổi trả vượt trội',
+    ],
+    content: `
+      <h3>1. Giới thiệu chính sách giỏ hàng</h3>
+      <p>Giỏ hàng tại Di Động Việt giúp quý khách dễ dàng quản lý, thêm bớt sản phẩm điện thoại, máy tính bảng, phụ kiện chính hãng chỉ bằng một click chuột. Các sản phẩm trong giỏ hàng sẽ được hệ thống giữ giá ưu đãi tốt nhất tại thời điểm kiểm tra đơn hàng.</p>
+      <h3>2. Quyền lợi khách hàng và D.Member</h3>
+      <p>Khi tiến hành thanh toán, khách hàng thành viên D.Member sẽ được tự động tích lũy và giảm thêm đến 1.5% giá trị hóa đơn. Quý khách vui lòng đăng nhập trước khi mua hàng để nhận được trọn vẹn đặc quyền thành viên.</p>
+      <h3>3. Phương thức thanh toán linh hoạt</h3>
+      <p>Di Động Việt hỗ trợ thanh toán linh hoạt qua các cổng thanh toán online (VNPAY, MoMo, ZaloPay), thẻ tín dụng hoặc chuyển khoản ngân hàng. Đặc biệt là chương trình hỗ trợ Trả góp 0% lãi suất nhanh chóng thông qua các đối tác tài chính lớn.</p>
+      <h3>4. Cam kết bảo hành, đổi trả vượt trội</h3>
+      <p>Toàn bộ sản phẩm bán ra đều được bảo hành chính hãng 100%. Quý khách hưởng quyền lợi dùng thử, 1 đổi 1 trong vòng 30 ngày nếu có lỗi kỹ thuật từ nhà sản xuất. Giao hàng siêu tốc 2 giờ nội thành tiện lợi.</p>
+    `,
+  };
+
+  const faqs = [
+    {
+      q: 'Tôi có thể mua trả góp các sản phẩm trong giỏ hàng không?',
+      a: 'Có, Di Động Việt hỗ trợ mua trả góp 0% lãi suất qua thẻ tín dụng của hơn 25 ngân hàng hoặc thông qua các công ty tài chính đối tác với hồ sơ cực kỳ đơn giản và duyệt nhanh chỉ trong 5 phút.',
+    },
+    {
+      q: 'Thời gian giao hàng sau khi đặt hàng thành công là bao lâu?',
+      a: 'Đối với khu vực nội thành TP.HCM, Hà Nội, Đà Nẵng, chúng tôi hỗ trợ giao hàng siêu tốc chỉ trong 2 giờ. Đối với các tỉnh thành khác, thời gian vận chuyển dao động từ 1 - 3 ngày làm việc.',
+    },
+    {
+      q: 'Tôi có được kiểm tra sản phẩm trước khi thanh toán không?',
+      a: 'Có, quý khách được quyền mở hộp đồng kiểm ngoại quan sản phẩm cùng nhân viên giao hàng để đảm bảo sản phẩm đúng mẫu mã, màu sắc và cấu hình đã đặt trước khi tiến hành thanh toán hoặc ký nhận.',
+    },
+    {
+      q: 'Làm thế nào để áp dụng mã giảm giá voucher?',
+      a: "Bạn chỉ cần nhấn vào 'Mã giảm giá', chọn voucher khả dụng hoặc nhập mã thủ công và áp dụng. Số tiền giảm sẽ được tính toán trực tiếp và trừ thẳng vào tổng tiền thanh toán đã chọn của bạn.",
+    },
+  ];
 
   return (
-    <div className='min-h-screen bg-slate-50 font-sans text-slate-700'>
+    <div className='min-h-screen bg-slate-50 font-sans text-slate-700 pb-16'>
       {/* Alert toast */}
       {alert && (
         <div
-          className={`
-          fixed bottom-4 right-4 z-50 p-3 rounded-xl shadow-lg border flex items-center gap-2 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
-          ${alert.type === 'success' ? 'bg-green-50/95 border-green-200 text-green-800' : 'bg-red-50/95 border-red-200 text-red-800'}
-        `}
+          className={`fixed bottom-4 right-4 z-50 p-3 rounded-xl shadow-lg border flex items-center gap-2 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-sm
+          ${alert.type === 'success' ? 'bg-green-50/95 border-green-200 text-green-800' : 'bg-red-50/95 border-red-200 text-red-800'}`}
         >
           {alert.type === 'success' ? (
             <CheckCircle size={16} className='text-green-600 flex-shrink-0' />
@@ -251,9 +493,9 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Breadcrumb */}
-      <nav className='bg-white border-b border-slate-100 py-2.5'>
-        <div className='max-w-6xl mx-auto px-4 flex items-center gap-1.5 text-[10px] text-gray-400 font-semibold'>
+      {/* ─── PHẦN 1: BREADCRUMB ─── */}
+      <nav className='bg-white border-b border-slate-100 py-2.5 shadow-xs'>
+        <div className='max-w-[1400px] mx-auto px-[30px] flex items-center gap-1.5 text-[10px] text-gray-400 font-semibold'>
           <Link
             href='/'
             className='hover:text-didongviet-red transition-colors'
@@ -261,14 +503,15 @@ export default function CartPage() {
             Trang chủ
           </Link>
           <ChevronRight size={10} />
-          <span className='text-slate-800 font-bold'>Giỏ hàng</span>
+          <span className='text-slate-800 font-bold'>Giỏ hàng của bạn</span>
         </div>
       </nav>
 
-      <div className='max-w-6xl mx-auto px-4 py-6'>
-        {/* Title */}
-        <div className='flex items-center gap-2.5 mb-5'>
-          <div className='h-8 w-8 rounded-lg bg-didongviet-red text-white flex items-center justify-center'>
+      {/* CỐT BỐ CỤC CHÍNH */}
+      <div className='max-w-[1400px] mx-auto px-[30px] py-6 space-y-6'>
+        {/* Header Title */}
+        <div className='flex items-center gap-2.5'>
+          <div className='h-8 w-8 rounded-lg bg-didongviet-red text-white flex items-center justify-center shadow-sm'>
             <ShoppingBag size={16} />
           </div>
           <div>
@@ -278,7 +521,7 @@ export default function CartPage() {
             <p className='text-[10px] text-slate-400 font-medium'>
               {isEmpty
                 ? 'Chưa có sản phẩm nào'
-                : `${items.length} sản phẩm trong giỏ`}
+                : `${cartItems.length} sản phẩm trong giỏ hàng`}
             </p>
           </div>
         </div>
@@ -292,301 +535,192 @@ export default function CartPage() {
             <h2 className='text-sm font-black text-slate-800 uppercase mb-1'>
               Giỏ hàng trống
             </h2>
-            <p className='text-[10px] text-gray-500 max-w-sm mx-auto mb-5 leading-relaxed'>
-              Hãy khám phá kho sản phẩm chính hãng của Di Động Việt và thêm sản
-              phẩm yêu thích vào giỏ hàng nhé!
+            <p className='text-[10px] text-slate-400 max-w-xs mx-auto mb-5 leading-relaxed'>
+              Hiện tại bạn chưa chọn bất kỳ sản phẩm nào. Hãy quay lại cửa hàng
+              để thêm những sản phẩm yêu thích vào giỏ hàng nhé!
             </p>
             <Button
               asChild
-              className='bg-didongviet-red hover:bg-didongviet-dark-red text-white py-2.5 px-6 text-xs font-bold rounded-xl border-none shadow-sm'
+              className='bg-didongviet-red hover:bg-red-700 text-white py-2.5 px-6 text-xs font-bold rounded-xl border-none shadow-sm cursor-pointer'
             >
-              <Link href='/products' className='flex items-center gap-1.5'>
+              <Link href='/dien-thoai' className='flex items-center gap-1.5'>
                 <span>Khám phá sản phẩm</span>
                 <ArrowRight size={12} />
               </Link>
             </Button>
           </div>
         ) : (
-          /* Cart with items */
-          <div className='grid grid-cols-1 lg:grid-cols-12 gap-5'>
-            {/* LEFT: Cart items */}
-            <div className='lg:col-span-8 space-y-3'>
-              {items.map((item) => {
-                const productId =
-                  typeof item.product === 'object'
-                    ? item.product._id
-                    : item.product;
-                const productName =
-                  typeof item.product === 'object'
-                    ? item.product.name
-                    : 'Sản phẩm';
-                const thumbUrl =
-                  typeof item.product === 'object'
-                    ? item.product.images?.find((img) => img.isThumbnail)
-                        ?.url ||
-                      item.product.images?.[0]?.url ||
-                      '/placeholder-product.png'
-                    : '/placeholder-product.png';
-                const isUpdating = updating === item.variantId;
-
-                return (
-                  <div
-                    key={`${productId}-${item.variantId}`}
-                    className={`bg-white rounded-xl border border-slate-100 shadow-xs p-4 flex gap-4 items-start transition-all ${isUpdating ? 'opacity-60' : ''}`}
-                  >
-                    {/* Product image */}
-                    <Link
-                      href={`/product/${productId}`}
-                      className='flex-shrink-0'
-                    >
-                      <div className='h-20 w-20 rounded-lg border border-slate-100 bg-slate-50 overflow-hidden flex items-center justify-center p-1.5 hover:border-slate-200 transition-colors'>
-                        <img
-                          src={thumbUrl}
-                          alt={productName}
-                          className='h-full w-full object-contain'
-                        />
-                      </div>
-                    </Link>
-
-                    {/* Product info */}
-                    <div className='flex-1 min-w-0 space-y-2'>
-                      <div className='flex items-start justify-between gap-2'>
-                        <div className='min-w-0'>
-                          <Link
-                            href={`/product/${productId}`}
-                            className='font-bold text-slate-800 text-xs sm:text-sm hover:text-didongviet-red block truncate leading-snug'
-                          >
-                            {productName}
-                          </Link>
-                          <div className='flex flex-wrap items-center gap-2 mt-1'>
-                            {item.selectedColor && (
-                              <span className='text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded'>
-                                Màu: {item.selectedColor}
-                              </span>
-                            )}
-                            {item.selectedStorage && (
-                              <span className='text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded'>
-                                {item.selectedStorage}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Delete button */}
-                        <button
-                          onClick={() =>
-                            handleRemoveItem(productId, item.variantId)
-                          }
-                          disabled={isUpdating}
-                          className='h-7 w-7 rounded-lg border border-slate-100 bg-white flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 cursor-pointer transition-all flex-shrink-0 disabled:opacity-50'
-                          title='Xóa khỏi giỏ'
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-
-                      {/* Price & Quantity */}
-                      <div className='flex items-center justify-between'>
-                        <span className='text-sm font-black text-didongviet-red'>
-                          {formatVND(item.price)}
-                        </span>
-
-                        <div className='flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white'>
-                          <button
-                            disabled={item.quantity <= 1 || isUpdating}
-                            onClick={() =>
-                              handleUpdateQty(
-                                productId,
-                                item.variantId,
-                                item.quantity - 1,
-                              )
-                            }
-                            className='px-2.5 py-1.5 hover:bg-slate-50 border-none bg-transparent cursor-pointer disabled:opacity-40 text-slate-800'
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <span className='px-3 py-1 text-[11px] font-black text-slate-800 text-center min-w-[28px] border-x border-slate-200'>
-                            {item.quantity}
-                          </span>
-                          <button
-                            disabled={isUpdating}
-                            onClick={() =>
-                              handleUpdateQty(
-                                productId,
-                                item.variantId,
-                                item.quantity + 1,
-                              )
-                            }
-                            className='px-2.5 py-1.5 hover:bg-slate-50 border-none bg-transparent cursor-pointer disabled:opacity-40 text-slate-800'
-                          >
-                            <Plus size={12} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Subtotal */}
-                      <div className='text-[10px] text-slate-400 font-semibold text-right'>
-                        Thành tiền:{' '}
-                        <strong className='text-slate-700'>
-                          {formatVND(item.price * item.quantity)}
-                        </strong>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Continue shopping */}
-              <div className='pt-2'>
-                <Button
-                  asChild
-                  variant='ghost'
-                  className='text-[10px] text-didongviet-red font-bold hover:bg-red-50 rounded-lg h-8 px-3'
-                >
-                  <Link href='/products' className='flex items-center gap-1'>
-                    <ArrowRight size={10} className='rotate-180' />
-                    <span>Tiếp tục mua sắm</span>
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* RIGHT: Order summary */}
-            <div className='lg:col-span-4 space-y-4'>
-              {/* Voucher */}
-              <div className='bg-white rounded-xl border border-slate-100 shadow-xs p-4 space-y-3'>
-                <div className='flex items-center gap-1.5'>
-                  <Ticket size={14} className='text-didongviet-red' />
-                  <span className='text-[10px] font-black text-slate-800 uppercase tracking-wider'>
-                    Mã giảm giá
-                  </span>
+          /* Giao diện chính kiểu bảng Shopee */
+          <div className='space-y-4'>
+            <div className='w-full bg-white rounded-2xl border border-slate-100 shadow-xs overflow-visible'>
+              {/* Header Cột (Chỉ trên màn hình lớn) */}
+              <div className='hidden lg:grid lg:grid-cols-[50px_1fr_180px_120px_130px_120px_80px] gap-4 items-center bg-slate-50/70 px-6 py-3.5 border-b border-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-wider'>
+                <div className='flex justify-center'>
+                  <input
+                    type='checkbox'
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                    className='rounded border-slate-300 text-didongviet-red focus:ring-didongviet-red w-4 h-4 cursor-pointer'
+                  />
                 </div>
-
-                {cart?.appliedVoucher ? (
-                  <div className='flex items-center justify-between p-2.5 bg-green-50 border border-green-200 rounded-lg'>
-                    <div className='flex items-center gap-1.5'>
-                      <CheckCircle size={13} className='text-green-600' />
-                      <span className='text-[10px] font-bold text-green-700'>
-                        Đang dùng: <strong>{cart.appliedVoucher}</strong>
-                      </span>
-                    </div>
-                    <span className='text-[10px] font-black text-green-700'>
-                      -{formatVND(cart.discountAmount)}
-                    </span>
-                  </div>
-                ) : (
-                  <div className='flex gap-2'>
-                    <Input
-                      placeholder='Nhập mã voucher...'
-                      value={voucherCode}
-                      onChange={(e) =>
-                        setVoucherCode(e.target.value.toUpperCase())
-                      }
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && handleApplyVoucher()
-                      }
-                      className='text-[11px] h-9 rounded-lg border-slate-200 uppercase font-bold'
-                    />
-                    <Button
-                      onClick={handleApplyVoucher}
-                      disabled={voucherLoading || !voucherCode.trim()}
-                      className='bg-didongviet-red hover:bg-didongviet-dark-red text-white h-9 px-4 text-[10px] font-bold rounded-lg border-none cursor-pointer disabled:opacity-50'
-                    >
-                      {voucherLoading ? (
-                        <Loader2 size={12} className='animate-spin' />
-                      ) : (
-                        'Áp dụng'
-                      )}
-                    </Button>
-                  </div>
-                )}
+                <div>Sản Phẩm</div>
+                <div>Phân Loại</div>
+                <div className='text-center'>Đơn Giá</div>
+                <div className='text-center'>Số Lượng</div>
+                <div className='text-center'>Số Tiền</div>
+                <div className='text-center'>Thao Tác</div>
               </div>
 
-              {/* Summary */}
-              <div className='bg-white rounded-xl border border-slate-100 shadow-xs p-4 space-y-3'>
-                <span className='text-[10px] font-black text-slate-800 uppercase tracking-wider block'>
-                  Tóm tắt đơn hàng
-                </span>
-
-                <div className='space-y-2 text-[11px]'>
-                  <div className='flex items-center justify-between text-slate-500 font-medium'>
-                    <span>Tạm tính ({items.length} sản phẩm)</span>
-                    <span className='font-bold text-slate-700'>
-                      {formatVND(cart?.totalPrice || 0)}
-                    </span>
-                  </div>
-
-                  {(cart?.discountAmount || 0) > 0 && (
-                    <div className='flex items-center justify-between text-green-600 font-bold'>
-                      <span>Giảm giá voucher</span>
-                      <span>-{formatVND(cart!.discountAmount)}</span>
-                    </div>
-                  )}
-
-                  <div className='flex items-center justify-between text-slate-500 font-medium'>
-                    <span>Phí vận chuyển</span>
-                    <span className='font-bold text-emerald-600'>Miễn phí</span>
-                  </div>
-
-                  <div className='border-t border-slate-100 pt-2 flex items-center justify-between'>
-                    <span className='text-xs font-black text-slate-800 uppercase'>
-                      Tổng thanh toán
-                    </span>
-                    <span className='text-lg font-black text-didongviet-red'>
-                      {formatVND(cart?.finalPrice || cart?.totalPrice || 0)}
-                    </span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => router.push('/checkout')}
-                  className='w-full bg-didongviet-red hover:bg-didongviet-dark-red text-white py-5 rounded-xl font-bold border-none shadow-md cursor-pointer text-xs flex items-center justify-center gap-1.5 group transition-transform hover:scale-[1.01]'
-                >
-                  <Package size={15} className='group-hover:animate-bounce' />
-                  <div className='text-left leading-tight'>
-                    <span className='block font-black'>TIẾN HÀNH ĐẶT HÀNG</span>
-                    <span className='block text-[8px] font-normal text-white/80'>
-                      Giao hàng siêu tốc 2h nội thành
-                    </span>
-                  </div>
-                </Button>
-              </div>
-
-              {/* Trust badges */}
-              <div className='bg-white rounded-xl border border-slate-100 shadow-xs p-3.5 space-y-2'>
-                {[
-                  {
-                    icon: ShieldCheck,
-                    color: 'text-emerald-600',
-                    label: '100% chính hãng, cam kết hoàn tiền',
-                  },
-                  {
-                    icon: Truck,
-                    color: 'text-blue-500',
-                    label: 'Giao hàng miễn phí toàn quốc',
-                  },
-                  {
-                    icon: RotateCw,
-                    color: 'text-purple-600',
-                    label: '1 đổi 1 trong 30 ngày nếu lỗi NSX',
-                  },
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className='flex items-center gap-2 text-[10px] text-slate-500 font-medium'
-                  >
-                    <item.icon
-                      size={13}
-                      className={`${item.color} flex-shrink-0`}
-                    />
-                    <span>{item.label}</span>
-                  </div>
+              {/* Danh sách các sản phẩm */}
+              <div className='divide-y divide-slate-100 bg-white'>
+                {cartItems.map((item) => (
+                  <CartItem
+                    key={`${item.product}|${item.variant}`}
+                    item={item}
+                    selected={selected.includes(
+                      `${item.product}|${item.variant}`,
+                    )}
+                    onToggleSelect={toggleSelectItem}
+                    onUpdateQty={handleUpdateQty}
+                    onRemove={handleRemoveItem}
+                    onChangeVariant={handleChangeVariant}
+                  />
                 ))}
               </div>
             </div>
+
+            {/* Hàng Mã Giảm Giá (Shopee Voucher style) */}
+            <div className='bg-white rounded-2xl border border-slate-100 shadow-2xs p-4 flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <Ticket size={16} className='text-didongviet-red' />
+                <span className='text-xs font-bold text-slate-800'>
+                  Mã giảm giá (Voucher)
+                </span>
+              </div>
+              <div className='flex items-center gap-3'>
+                {appliedVoucher ? (
+                  <span className='bg-green-50 text-green-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-green-200 flex items-center gap-1'>
+                    <span>Đã áp dụng: {appliedVoucher.code}</span>
+                    <button
+                      onClick={() => {
+                        setAppliedVoucher(null);
+                        setDiscountAmount(0);
+                      }}
+                      className='text-green-500 hover:text-green-700 font-black ml-1 text-xs'
+                    >
+                      ×
+                    </button>
+                  </span>
+                ) : bestVoucherCode ? (
+                  <span className='text-[10px] text-didongviet-red bg-red-50 px-2 py-0.5 rounded font-bold animate-pulse'>
+                    Có mã tốt nhất cho bạn!
+                  </span>
+                ) : null}
+                <button
+                  onClick={() => setShowVoucherModal(true)}
+                  className='text-xs font-extrabold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-none'
+                >
+                  {appliedVoucher ? 'Thay đổi mã' : 'Chọn hoặc nhập mã'}
+                </button>
+              </div>
+            </div>
+
+            {/* Thanh thanh toán bottom bar (Shopee style, sticky bottom) */}
+            <div className='sticky bottom-0 z-30 bg-white border border-slate-100 shadow-lg rounded-2xl py-3 px-6 flex flex-col sm:flex-row items-center justify-between gap-4'>
+              <div className='flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-start'>
+                <label className='flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none'>
+                  <input
+                    type='checkbox'
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                    className='rounded border-slate-300 text-didongviet-red focus:ring-didongviet-red w-4.5 h-4.5 cursor-pointer'
+                  />
+                  <span>Chọn Tất Cả ({cartItems.length})</span>
+                </label>
+                <button
+                  onClick={handleRemoveSelected}
+                  className='text-xs font-semibold text-slate-500 hover:text-didongviet-red transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-none'
+                >
+                  <Trash2 size={13} />
+                  <span>Xóa đã chọn</span>
+                </button>
+              </div>
+
+              <div className='flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto'>
+                <div className='text-right'>
+                  <div className='text-xs text-slate-500 font-medium flex items-center gap-1.5 justify-end'>
+                    <span>Tổng thanh toán ({selected.length} sản phẩm):</span>
+                    <span className='text-lg font-black text-didongviet-red font-mono'>
+                      {formatVND(finalPrice)}
+                    </span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className='text-[10px] text-green-600 font-bold'>
+                      Đã tiết kiệm: {formatVND(discountAmount)}
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={handleCheckout}
+                  className='bg-didongviet-red hover:bg-red-700 text-white font-black px-8 py-5 text-xs rounded-xl shadow-md cursor-pointer transition-transform hover:scale-[1.01] h-11 flex items-center justify-center'
+                >
+                  Mua Hàng
+                </Button>
+              </div>
+            </div>
+
+            <div className='pt-2 flex justify-start'>
+              <Button
+                asChild
+                variant='ghost'
+                className='text-[10px] text-didongviet-red font-bold hover:bg-red-50 rounded-lg h-8 px-3 cursor-pointer'
+              >
+                <Link href='/dien-thoai' className='flex items-center gap-1'>
+                  <ArrowRight size={10} className='rotate-180' />
+                  <span>Tiếp tục mua sắm</span>
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
-      </div>
+
+        <CartSEOAndFAQ seoContent={seoContent} faqs={faqs} />
+
+      {/* Pop-up Voucher selection modal */}
+      {showVoucherModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs animate-in fade-in duration-200'>
+          <div className='bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl border border-slate-100 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200'>
+            <div className='flex items-center justify-between border-b border-slate-100 pb-3 mb-4 flex-shrink-0'>
+              <h3 className='text-sm font-black text-slate-800 uppercase tracking-tight'>
+                Chọn mã giảm giá (Voucher)
+              </h3>
+              <button
+                onClick={() => setShowVoucherModal(false)}
+                className='text-slate-400 hover:text-slate-600 text-lg font-bold p-1 bg-transparent border-none cursor-pointer'
+              >
+                ×
+              </button>
+            </div>
+
+            <div className='flex-1 overflow-y-auto pr-1'>
+              <VoucherList
+                applicableVouchers={applicableVouchers}
+                vouchers={vouchers}
+                bestVoucherCode={bestVoucherCode}
+                appliedVoucher={appliedVoucher}
+                onApplyVoucher={(v: any) => applyVoucherByCode(v.code)}
+                onManualApply={(code: string) => {
+                  setVoucherCode(code);
+                  setTimeout(() => handleApplyVoucher(), 50);
+                }}
+                loading={voucherLoading}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  </div>
   );
 }
