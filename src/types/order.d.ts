@@ -13,6 +13,9 @@ export interface OrderItem {
   price: number;
   product: string | Product;
   variantId?: string | Product;
+  selectedColor?: string;
+  selectedStorage?: string;
+  sku?: string;
 }
 
 export interface ShippingAddress {
@@ -47,7 +50,7 @@ export interface Order {
   paidAt?: string | Date;
   isDelivered: boolean;
   deliveredAt?: string | Date;
-  orderStatus: 'Đang xử lý' | 'Đã xác nhận' | 'Đang giao hàng' | 'Đã hoàn thành' | 'Đã hủy' | string;
+  orderStatus: 'Chờ xác nhận' | 'Chờ lấy hàng' | 'Đang giao' | 'Đã giao' | 'Đã hủy' | 'Trả hàng/Hoàn tiền' | string;
   createdAt?: string;
   updatedAt?: string;
 }

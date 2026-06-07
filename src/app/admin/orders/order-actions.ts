@@ -43,6 +43,25 @@ export async function updateOrderToDeliveredAction(id: string): Promise<Response
   }
 }
 
+export async function updateOrderStatusAction(id: string, status: string): Promise<ResponseState> {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getApiUrl()}/orders/${id}/status`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ status }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, message: data.message || 'Cập nhật trạng thái đơn hàng thất bại.' };
+    }
+    return { success: true, message: 'Đã cập nhật trạng thái đơn hàng thành công!' };
+  } catch (error) {
+    console.error('updateOrderStatusAction error:', error);
+    return { success: false, message: 'Lỗi hệ thống. Vui lòng thử lại sau.' };
+  }
+}
+
 export async function deleteOrderAction(id: string): Promise<ResponseState> {
   try {
     const headers = await getAuthHeaders();

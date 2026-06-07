@@ -11,7 +11,12 @@ interface ProductReviewsProps {
 
 interface Review {
     _id: string;
-    author: string;
+    author?: string;
+    user?: {
+        _id: string;
+        name: string;
+        avatar?: string;
+    };
     avatar?: string;
     rating: number;
     title: string;
@@ -221,12 +226,16 @@ export default function ProductReviews({ product }: ProductReviewsProps) {
                             <div key={review._id} className='border border-slate-100 rounded-lg p-4 hover:shadow-sm transition-shadow'>
                                 {/* Review header */}
                                 <div className='flex items-start gap-3 mb-3'>
-                                    <div className='w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg shrink-0'>
-                                        {review.avatar || '👤'}
+                                    <div className='w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg shrink-0 overflow-hidden border border-slate-100'>
+                                        {review.user?.avatar ? (
+                                            <img src={review.user.avatar} alt={review.user.name} className='h-full w-full object-cover' />
+                                        ) : (
+                                            review.avatar || '👤'
+                                        )}
                                     </div>
                                     <div className='flex-1 min-w-0'>
                                         <div className='flex items-center gap-2 mb-1'>
-                                            <span className='text-xs font-bold text-slate-800'>{review.author}</span>
+                                            <span className='text-xs font-bold text-slate-800'>{review.user?.name || review.author || 'Khách hàng'}</span>
                                             {review.verified && (
                                                 <span className='text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-bold'>
                                                     ✓ Đã mua

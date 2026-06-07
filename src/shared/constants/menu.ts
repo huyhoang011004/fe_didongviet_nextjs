@@ -1,9 +1,10 @@
 export const MENU_CATEGORIES = [
   {
     title: 'Điện thoại',
+    slug: 'dien-thoai',
     items: [
       'iPhone',
-      'Samsung Galaxy',
+      'Samsung',
       'Xiaomi',
       'OPPO',
       'Realme',
@@ -12,15 +13,18 @@ export const MENU_CATEGORIES = [
     ],
   },
   {
-    title: 'Máy tính bảng',
+    title: 'iPad & Tablet',
+    slug: 'ipad-tablet',
     items: ['iPad', 'Samsung Galaxy Tab', 'Xiaomi Pad', 'Huawei MatePad'],
   },
   {
-    title: 'Laptop & Mac',
+    title: 'MacBook & Laptop',
+    slug: 'macbook-laptop',
     items: ['MacBook Pro', 'MacBook Air', 'MacBook Neo'],
   },
   {
-    title: 'Đồng hồ (Smartwatch)',
+    title: 'Đồng hồ thông minh',
+    slug: 'dong-ho-thong-minh',
     items: [
       'Apple Watch',
       'Samsung Watch',
@@ -31,6 +35,7 @@ export const MENU_CATEGORIES = [
   },
   {
     title: 'Phụ kiện',
+    slug: 'phu-kien',
     items: [
       'Phụ kiện Apple',
       'Pin dự phòng',
@@ -41,6 +46,7 @@ export const MENU_CATEGORIES = [
   },
   {
     title: 'Âm thanh',
+    slug: 'am-thanh',
     items: [
       'AirPods',
       'Loa nghe nhạc',

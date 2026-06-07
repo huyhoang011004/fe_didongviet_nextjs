@@ -1,12 +1,14 @@
 'use client';
 
-import { Eye, FolderOpen } from 'lucide-react';
+import { useState } from 'react';
+import { Check, ChevronDown, Eye, FolderOpen, PackageCheck, Truck } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 
 interface OrderTableProps {
   orders: any[];
   loading: boolean;
   onViewOrder: (order: any) => void;
+  onUpdateStatus: (id: string, status: string) => void;
 }
 
 const formatVND = (num: number) =>
@@ -23,13 +25,92 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const ORDER_STATUS_STYLE: Record<string, string> = {
-  'Đã hoàn thành': 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800',
-  'Đang giao hàng': 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
-  'Đã hủy': 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:border-red-800',
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  'Chờ xác nhận': 'Chờ xác nhận',
+  'Chờ lấy hàng': 'Chờ lấy hàng',
+  'Đang giao': 'Đang giao',
+  'Đã giao': 'Đã giao',
+  'Đã hủy': 'Đã hủy',
+  'Trả hàng/Hoàn tiền': 'Trả hàng/Hoàn tiền',
 };
 
-export function OrderTable({ orders, loading, onViewOrder }: OrderTableProps) {
+const ORDER_STATUS_STYLE: Record<string, string> = {
+  'Chờ xác nhận': 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800',
+  'Chờ lấy hàng': 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/30 dark:border-indigo-800',
+  'Đang giao': 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
+  'Đã giao': 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800',
+  'Đã hủy': 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:border-red-800',
+  'Trả hàng/Hoàn tiền': 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800',
+};
+
+const STATUS_ACTIONS: Record<string, { label: string; nextStatus: string; icon: typeof Check }> = {
+  'Chờ xác nhận': { label: 'Duyệt', nextStatus: 'Chờ lấy hàng', icon: Check },
+  'Chờ lấy hàng': { label: 'Chuẩn bị hàng', nextStatus: 'Đang giao', icon: PackageCheck },
+  'Đang giao': { label: 'Đã giao', nextStatus: 'Đã giao', icon: Truck },
+};
+
+const getVariantLabel = (item: any) => {
+  const variantId = String(item.variantId?._id || item.variantId || '');
+  const variant = item.product?.variants?.find((v: any) => String(v._id) === variantId);
+  const color = item.selectedColor || variant?.color || '';
+  const ramRom = item.selectedStorage || (variant?.ram && variant?.rom ? `${variant.ram}/${variant.rom}` : '');
+  const parts = [
+    color ? ` ${color}` : '',
+    ramRom ? `${ramRom}` : '',
+  ].filter(Boolean);
+
+  return parts.length ? parts.join(' | ') : 'Chưa có thông tin phân loại';
+};
+
+function ProductSummary({
+  order,
+  expanded,
+  onToggle,
+}: {
+  order: any;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const items = order.orderItems || [];
+  const firstItem = items[0];
+  const visibleItems = expanded ? items : items.slice(0, 1);
+
+  if (!firstItem) {
+    return <span className='text-xs font-semibold text-slate-400'>Chưa có sản phẩm</span>;
+  }
+
+  return (
+    <div className='space-y-2'>
+      {visibleItems.map((item: any, idx: number) => (
+        <div key={item._id || `${item.product}-${idx}`} className='flex items-center gap-3 min-w-0'>
+          <div className='h-14 w-14 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 overflow-hidden flex items-center justify-center p-1 flex-shrink-0'>
+            <img src={item.image || '/auth-image.webp'} alt={item.name} className='h-full w-full object-contain' />
+          </div>
+          <div className='min-w-0'>
+            <span className='font-bold text-slate-900 dark:text-white block truncate text-sm'>{item.name}</span>
+            <span className='text-xs text-slate-500 dark:text-slate-400 block truncate'>{getVariantLabel(item)}</span>
+            <span className='text-[11px] text-slate-400 block'>SL: {item.qty}</span>
+          </div>
+        </div>
+      ))}
+
+      {items.length > 1 && (
+        <button
+          type='button'
+          onClick={onToggle}
+          className='inline-flex items-center gap-1.5 text-xs font-bold text-didongviet-red hover:text-red-700 bg-transparent border-none cursor-pointer p-0'
+        >
+          <ChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          {expanded ? 'Thu gọn phân loại' : `Mở ${items.length - 1} phân loại còn lại`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function OrderTable({ orders, loading, onViewOrder, onUpdateStatus }: OrderTableProps) {
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+
   if (loading) {
     return (
       <div className='flex flex-col items-center justify-center py-20 gap-3'>
@@ -49,83 +130,90 @@ export function OrderTable({ orders, loading, onViewOrder }: OrderTableProps) {
   }
 
   return (
-    <div className='overflow-x-auto'>
-      <table className='w-full text-left border-collapse min-w-[860px]'>
-        <thead>
-          <tr className='bg-slate-50/60 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800'>
-            {['Mã Đơn Hàng', 'Khách nhận hàng', 'Thời gian lập', 'Tổng tiền', 'Phương thức', 'Thanh toán', 'Vận chuyển', ''].map((h) => (
-              <th key={h} className='py-3.5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider'>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className='divide-y divide-slate-50 dark:divide-slate-800/50 text-sm text-slate-700 dark:text-slate-300'>
-          {orders.map((o) => (
-            <tr key={o._id} className='hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors group'>
-              {/* Mã đơn */}
-              <td className='py-4 px-6 font-mono font-bold text-slate-800 dark:text-slate-100 truncate max-w-[130px]'>
-                {o._id}
-              </td>
+    <div className='divide-y divide-slate-100 dark:divide-slate-800'>
+      <div className='hidden md:grid grid-cols-[minmax(320px,1.9fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(130px,0.7fr)_minmax(150px,0.8fr)] gap-4 px-6 py-3 bg-slate-50/60 dark:bg-slate-800/40 text-[11px] font-black text-slate-400 uppercase tracking-wider'>
+        <span>Sản phẩm</span>
+        <span>Tổng tiền</span>
+        <span>Phương thức</span>
+        <span>Trạng thái đơn</span>
+        <span className='text-right'>Thao tác</span>
+      </div>
 
-              {/* Khách hàng */}
-              <td className='py-4 px-6'>
-                <div className='flex flex-col'>
-                  <span className='font-bold text-slate-900 dark:text-white'>
-                    {o.shippingAddress?.fullName || 'Khách vãng lai'}
-                  </span>
-                  <span className='text-xs text-slate-400'>{o.shippingAddress?.phone || 'Chưa có SĐT'}</span>
+      {orders.map((order) => {
+        const action = STATUS_ACTIONS[order.orderStatus];
+        const ActionIcon = action?.icon;
+        const isExpanded = Boolean(expandedOrders[order._id]);
+
+        return (
+          <div key={order._id} className='px-4 md:px-6 py-4 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors'>
+            <div className='flex items-start justify-between gap-4 pb-3'>
+              <div className='min-w-0'>
+                <div className='font-bold text-slate-900 dark:text-white truncate'>
+                  {order.shippingAddress?.fullName || 'Khách vãng lai'}
                 </div>
-              </td>
+                <div className='text-xs font-medium text-slate-400'>{order.shippingAddress?.phone || 'Chưa có SĐT'}</div>
+              </div>
+              <div className='text-right flex-shrink-0 max-w-[48%]'>
+                <div className='font-mono text-xs font-bold text-slate-800 dark:text-slate-100 truncate'>{order._id}</div>
+                <div className='text-[11px] font-medium text-slate-400 mt-0.5'>{formatDate(order.createdAt)}</div>
+              </div>
+            </div>
 
-              {/* Ngày */}
-              <td className='py-4 px-6 text-xs'>{formatDate(o.createdAt)}</td>
+            <div className='grid grid-cols-1 md:grid-cols-[minmax(320px,1.9fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(130px,0.7fr)_minmax(150px,0.8fr)] gap-4 items-start'>
+              <ProductSummary
+                order={order}
+                expanded={isExpanded}
+                onToggle={() => setExpandedOrders((prev) => ({ ...prev, [order._id]: !prev[order._id] }))}
+              />
 
-              {/* Tổng tiền */}
-              <td className='py-4 px-6 font-extrabold text-didongviet-red'>{formatVND(o.totalPrice)}</td>
+              <div>
+                <div className='md:hidden text-[10px] font-bold text-slate-400 uppercase mb-1'>Tổng tiền</div>
+                <div className='font-extrabold text-didongviet-red'>{formatVND(order.totalPrice)}</div>
+              </div>
 
-              {/* Phương thức thanh toán */}
-              <td className='py-4 px-6'>
-                <span className='px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400'>
-                  {o.paymentMethod}
+              <div>
+                <div className='md:hidden text-[10px] font-bold text-slate-400 uppercase mb-1'>Phương thức</div>
+                <span className='inline-flex px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400'>
+                  {order.paymentMethod}
                 </span>
-              </td>
+              </div>
 
-              {/* Trạng thái thanh toán */}
-              <td className='py-4 px-6'>
-                <span className={`flex items-center gap-1.5 text-xs font-semibold ${o.isPaid ? 'text-emerald-600' : 'text-amber-500'}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${o.isPaid ? 'bg-emerald-600' : 'bg-amber-500'}`} />
-                  {o.isPaid ? `Đã TT (${formatDate(o.paidAt)})` : 'Chờ TT'}
-                </span>
-              </td>
-
-              {/* Trạng thái vận chuyển */}
-              <td className='py-4 px-6'>
+              <div>
+                <div className='md:hidden text-[10px] font-bold text-slate-400 uppercase mb-1'>Trạng thái đơn</div>
                 <span
-                  className={`px-2.5 py-1.5 rounded-xl text-[10px] font-bold border uppercase ${
-                    ORDER_STATUS_STYLE[o.orderStatus] ?? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800'
-                  }`}
+                  className={`inline-flex px-2.5 py-1.5 rounded-xl text-[10px] font-bold border uppercase ${ORDER_STATUS_STYLE[order.orderStatus] ?? ORDER_STATUS_STYLE['Chờ xác nhận']
+                    }`}
                 >
-                  {o.orderStatus}
+                  {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
                 </span>
-              </td>
+              </div>
 
-              {/* Nút xem */}
-              <td className='py-4 px-6 text-right whitespace-nowrap'>
+              <div className='flex md:justify-end gap-2 flex-wrap'>
                 <Button
-                  onClick={() => onViewOrder(o)}
+                  onClick={() => onViewOrder(order)}
                   variant='outline'
                   size='sm'
-                  className='flex items-center gap-1.5 hover:text-didongviet-red border-slate-200 dark:border-slate-700 cursor-pointer text-xs font-semibold py-4 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity'
+                  className='flex items-center gap-1.5 hover:text-didongviet-red border-slate-200 dark:border-slate-700 cursor-pointer text-xs font-semibold rounded-xl'
                 >
                   <Eye size={12} />
-                  <span>Mở hóa đơn</span>
+                  <span>Xem hóa đơn</span>
                 </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+                {action && ActionIcon && (
+                  <button
+                    type='button'
+                    onClick={() => onUpdateStatus(order._id, action.nextStatus)}
+                    className='inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-didongviet-red hover:bg-red-700 rounded-xl transition-colors cursor-pointer border-none'
+                  >
+                    <ActionIcon size={13} />
+                    {action.label}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -26,7 +26,7 @@ function OrdersAdminContent() {
     setOrderSearch,
     orderStatusFilter,
     setOrderStatusFilter,
-    handleShipOrder,
+    handleUpdateOrderStatus,
     confirmDeleteOrder,
   } = useOrder();
 
@@ -61,6 +61,7 @@ function OrdersAdminContent() {
           setOrderStatusFilter={setOrderStatusFilter}
           filteredCount={filteredOrders.length}
           totalCount={ordersData.length}
+          orders={ordersData}
         />
 
         <OrderTable
@@ -70,6 +71,7 @@ function OrdersAdminContent() {
             setSelectedOrder(order);
             setShowOrderDetailsModal(true);
           }}
+          onUpdateStatus={handleUpdateOrderStatus}
         />
       </Card>
 
@@ -78,7 +80,7 @@ function OrdersAdminContent() {
         isOpen={showOrderDetailsModal}
         order={selectedOrder}
         onClose={() => setShowOrderDetailsModal(false)}
-        onShip={handleShipOrder}
+        onUpdateStatus={handleUpdateOrderStatus}
         onDeleteClick={() => setShowDeleteOrderModal(true)}
       />
 

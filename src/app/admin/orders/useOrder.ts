@@ -4,8 +4,25 @@ import { useEffect, useState } from 'react';
 import {
   getOrdersAction,
   updateOrderToDeliveredAction,
+  updateOrderStatusAction,
   deleteOrderAction,
 } from './order-actions';
+
+const normalizeOrderStatus = (status?: string) => {
+  const statusMap: Record<string, string> = {
+    'Đang xử lý': 'Chờ xác nhận',
+    'Đã xác nhận': 'Chờ lấy hàng',
+    'Đang giao hàng': 'Đang giao',
+    'Đã hoàn thành': 'Đã giao',
+  };
+
+  return statusMap[status || ''] || status || 'Chờ xác nhận';
+};
+
+const normalizeOrder = (order: any) => ({
+  ...order,
+  orderStatus: normalizeOrderStatus(order.orderStatus),
+});
 
 export function useOrder() {
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -33,7 +50,7 @@ export function useOrder() {
     setOrderLoading(true);
     const res = await getOrdersAction();
     if (res.success) {
-      setOrdersData(res.orders);
+      setOrdersData((res.orders || []).map(normalizeOrder));
     } else {
       setAlert({ type: 'error', message: res.message || 'Lỗi tải danh sách đơn hàng.' });
     }
@@ -41,6 +58,7 @@ export function useOrder() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrders();
   }, []);
 
@@ -55,15 +73,7 @@ export function useOrder() {
     const matchesStatus =
       orderStatusFilter === 'all'
         ? true
-        : orderStatusFilter === 'paid'
-          ? o.isPaid
-          : orderStatusFilter === 'unpaid'
-            ? !o.isPaid
-            : orderStatusFilter === 'delivered'
-              ? o.isDelivered
-              : orderStatusFilter === 'pending'
-                ? !o.isDelivered
-                : o.orderStatus === orderStatusFilter;
+        : o.orderStatus === orderStatusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -79,7 +89,25 @@ export function useOrder() {
           ...prev,
           isDelivered: true,
           deliveredAt: new Date().toISOString(),
-          orderStatus: 'Đã hoàn thành',
+          orderStatus: 'Đã giao',
+        }));
+      }
+    } else {
+      setAlert({ type: 'error', message: res.message });
+    }
+  };
+
+  const handleUpdateOrderStatus = async (id: string, status: string) => {
+    const res = await updateOrderStatusAction(id, status);
+    if (res.success) {
+      setAlert({ type: 'success', message: res.message });
+      fetchOrders();
+      if (selectedOrder && selectedOrder._id === id) {
+        setSelectedOrder((prev: any) => ({
+          ...prev,
+          orderStatus: status,
+          isDelivered: status === 'Đã giao' ? true : prev.isDelivered,
+          deliveredAt: status === 'Đã giao' ? new Date().toISOString() : prev.deliveredAt,
         }));
       }
     } else {
@@ -117,6 +145,7 @@ export function useOrder() {
     orderStatusFilter,
     setOrderStatusFilter,
     handleShipOrder,
+    handleUpdateOrderStatus,
     confirmDeleteOrder,
     fetchOrders,
   };

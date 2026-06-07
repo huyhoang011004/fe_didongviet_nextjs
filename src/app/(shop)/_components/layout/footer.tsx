@@ -54,7 +54,7 @@ export default function Footer() {
               {MENU_CATEGORIES.slice(0, 5).map((cat) => (
                 <li key={cat.title}>
                   <Link
-                    href='#'
+                    href={`/${cat.slug}`}
                     className='hover:text-primary transition-colors block'
                   >
                     {cat.title}

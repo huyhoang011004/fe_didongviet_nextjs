@@ -130,13 +130,13 @@ export default function ContactPage() {
       </nav>
 
       {/* HEADER BANNER */}
-      <section className='bg-slate-900 py-12 relative overflow-hidden'>
-        <div className='absolute top-0 right-0 w-64 h-64 bg-red-600/20 rounded-full blur-3xl pointer-events-none' />
+      <section className='bg-slate-900 py-6 relative overflow-hidden'>
+        <div className='absolute top-0 right-0 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none' />
         <div className='max-w-6xl mx-auto px-4 relative z-10 text-center'>
-          <h1 className='text-2xl sm:text-3xl font-black tracking-tight text-white uppercase mb-3'>
+          <h1 className='text-xl sm:text-2xl font-black tracking-tight text-white uppercase mb-1.5'>
             Liên hệ Di Động Việt
           </h1>
-          <p className='text-xs text-slate-400 font-medium max-w-lg mx-auto'>
+          <p className='text-[11px] text-slate-400 font-medium max-w-lg mx-auto'>
             Chúng tôi luôn sẵn sàng lắng nghe và giải đáp mọi thắc mắc của bạn.
             Hãy liên hệ với Di Động Việt qua các kênh dưới đây!
           </p>

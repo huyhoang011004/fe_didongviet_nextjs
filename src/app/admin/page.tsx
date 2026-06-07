@@ -110,7 +110,7 @@ function AdminContent() {
 
       if (ordersRes.success && ordersRes.orders) {
         totalRevenue = ordersRes.orders
-          .filter((o: any) => o.isPaid || o.orderStatus === 'Đã hoàn thành')
+          .filter((o: any) => o.isPaid || o.orderStatus === 'Đã giao')
           .reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
 
         recentOrders = [...ordersRes.orders]
@@ -365,9 +365,9 @@ function AdminContent() {
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase
                             ${
-                              o.orderStatus === 'Đã hoàn thành'
+                              o.orderStatus === 'Đã giao'
                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                                : o.orderStatus === 'Đang giao hàng'
+                                : o.orderStatus === 'Đang giao'
                                   ? 'bg-blue-50 text-blue-600 border-blue-200'
                                   : o.orderStatus === 'Đã hủy'
                                     ? 'bg-red-50 text-red-600 border-red-200'

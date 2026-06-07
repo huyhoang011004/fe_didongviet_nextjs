@@ -112,6 +112,28 @@ export function ProductFormFields({
     }
   }, [videoUrl]);
 
+  // Kiểm tra xem danh mục hiện tại có yêu cầu RAM/ROM không
+  const [showRamRom, setShowRamRom] = useState(true);
+  useEffect(() => {
+    if (!selectedCategoryId || categories.length === 0) {
+      setShowRamRom(true);
+      return;
+    }
+
+    const hideKeywords = ['phụ kiện', 'cáp sạc', 'củ sạc', 'pin sạc dự phòng', 'thiết bị âm thanh', 'đồng hồ thông minh', 'watch', 'gia dụng thông minh', 'smarthome'];
+
+    const checkCategory = (catId: string): boolean => {
+      const cat = categories.find(c => String(c._id) === String(catId));
+      if (!cat) return true;
+      const nameLower = cat.name.toLowerCase();
+      if (hideKeywords.some(kw => nameLower.includes(kw))) return false;
+      const parentId = cat.parentId?._id || cat.parentId;
+      return parentId ? checkCategory(parentId) : true;
+    };
+
+    setShowRamRom(checkCategory(selectedCategoryId));
+  }, [selectedCategoryId, categories]);
+
   // Quản lý kho hàng chi nhánh hiển thị
   useEffect(() => {
     if (branches?.length > 0) {
@@ -279,8 +301,8 @@ export function ProductFormFields({
   const formatNumber = (val: any) =>
     val
       ? new Intl.NumberFormat('vi-VN').format(
-          parseInt(val.toString().replace(/\D/g, ''), 10),
-        )
+        parseInt(val.toString().replace(/\D/g, ''), 10),
+      )
       : '';
 
   return (
@@ -465,13 +487,12 @@ export function ProductFormFields({
                         triggerFileSelector(imageSlots.length);
                       }
                     }}
-                    className={`relative h-28 w-full rounded-xl border border-dashed flex items-center justify-center p-1 ${
-                      slot
-                        ? 'border-slate-200 bg-white cursor-pointer'
-                        : isPlaceholder
+                    className={`relative h-28 w-full rounded-xl border border-dashed flex items-center justify-center p-1 ${slot
+                      ? 'border-slate-200 bg-white cursor-pointer'
+                      : isPlaceholder
                         ? 'border-slate-300 bg-slate-50 cursor-pointer hover:border-slate-400'
                         : 'border-slate-100 bg-slate-50/50 cursor-not-allowed opacity-50'
-                    }`}
+                      }`}
                   >
                     {slot ? (
                       <>
@@ -748,11 +769,11 @@ export function ProductFormFields({
                           variants.map((item, i) =>
                             i === idx
                               ? {
-                                  ...item,
-                                  file,
-                                  previewUrl: URL.createObjectURL(file),
-                                  variantImage: '',
-                                }
+                                ...item,
+                                file,
+                                previewUrl: URL.createObjectURL(file),
+                                variantImage: '',
+                              }
                               : item,
                           ),
                         );
@@ -778,28 +799,30 @@ export function ProductFormFields({
                         className='h-8 text-xs'
                       />
                     </div>
-                    <div>
-                      <span className='text-[10px] text-slate-400 block uppercase font-bold'>
-                        RAM
-                      </span>
-                      <Input
-                        name={`variant_${idx}_ram`}
-                        defaultValue={v.ram}
-                        required
-                        className='h-8 text-xs'
-                      />
-                    </div>
-                    <div>
-                      <span className='text-[10px] text-slate-400 block uppercase font-bold'>
-                        ROM
-                      </span>
-                      <Input
-                        name={`variant_${idx}_rom`}
-                        defaultValue={v.rom}
-                        required
-                        className='h-8 text-xs'
-                      />
-                    </div>
+                    {showRamRom && (
+                      <>
+                        <div>
+                          <span className='text-[10px] text-slate-400 block uppercase font-bold'>
+                            RAM
+                          </span>
+                          <Input
+                            name={`variant_${idx}_ram`}
+                            defaultValue={v.ram}
+                            className='h-8 text-xs'
+                          />
+                        </div>
+                        <div>
+                          <span className='text-[10px] text-slate-400 block uppercase font-bold'>
+                            ROM
+                          </span>
+                          <Input
+                            name={`variant_${idx}_rom`}
+                            defaultValue={v.rom}
+                            className='h-8 text-xs'
+                          />
+                        </div>
+                      </>
+                    )}
                     <div>
                       <span className='text-[10px] text-slate-400 block uppercase font-bold'>
                         SKU
@@ -823,9 +846,9 @@ export function ProductFormFields({
                             variants.map((item, i) =>
                               i === idx
                                 ? {
-                                    ...item,
-                                    price: e.target.value.replace(/\D/g, ''),
-                                  }
+                                  ...item,
+                                  price: e.target.value.replace(/\D/g, ''),
+                                }
                                 : item,
                             ),
                           )
@@ -851,12 +874,12 @@ export function ProductFormFields({
                             variants.map((item, i) =>
                               i === idx
                                 ? {
-                                    ...item,
-                                    salePrice: e.target.value.replace(
-                                      /\D/g,
-                                      '',
-                                    ),
-                                  }
+                                  ...item,
+                                  salePrice: e.target.value.replace(
+                                    /\D/g,
+                                    '',
+                                  ),
+                                }
                                 : item,
                             ),
                           )
@@ -975,11 +998,11 @@ export function ProductFormFields({
                     variants.map((item, i) =>
                       i === urlInputModal.variantIndex
                         ? {
-                            ...item,
-                            file: null,
-                            previewUrl: urlInputModal.value,
-                            variantImage: urlInputModal.value,
-                          }
+                          ...item,
+                          file: null,
+                          previewUrl: urlInputModal.value,
+                          variantImage: urlInputModal.value,
+                        }
                         : item,
                     ),
                   );

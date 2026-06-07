@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   CheckCircle,
@@ -37,18 +37,27 @@ const formatVND = (num: number) => {
   }).format(num);
 };
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const buyNow = searchParams.get('buyNow') === 'true';
+  const productId = searchParams.get('productId') || '';
+  const variantId = searchParams.get('variantId') || '';
+  const qty = parseInt(searchParams.get('qty') || '1', 10);
+
+  const [buyNowItem, setBuyNowItem] = useState<any | null>(null);
 
   // Zustand Cart Store
   const allCartItems = useCartStore((state) => state.items);
   const selected = useCartStore((state) => state.selected);
   const removeItem = useCartStore((state) => state.removeItem);
 
-  // Lọc lấy các sản phẩm đã chọn thanh toán
-  const cartItems = allCartItems.filter((item) =>
-    selected.includes(`${item.product}|${item.variant}`)
-  );
+  // Lọc lấy các sản phẩm đã chọn thanh toán hoặc dùng sản phẩm mua ngay trực tiếp
+  const cartItems = buyNow
+    ? (buyNowItem ? [buyNowItem] : [])
+    : allCartItems.filter((item) =>
+        selected.includes(`${item.product}|${item.variant}`)
+      );
 
   const selectedTotalPrice = cartItems.reduce(
     (total, item) => total + (item.salePrice || item.price) * item.quantity,
@@ -88,6 +97,7 @@ export default function CheckoutPage() {
   const [productDetails, setProductDetails] = useState<Record<string, any>>({});
 
   const [submitting, setSubmitting] = useState(false);
+  const [isOrderCompleted, setIsOrderCompleted] = useState(false);
   const [alert, setAlert] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -104,7 +114,7 @@ export default function CheckoutPage() {
     }
   }, [alert]);
 
-  // Load profile và chi nhánh
+  // Load profile, chi nhánh và thông tin mua ngay trực tiếp
   useEffect(() => {
     async function loadData() {
       try {
@@ -145,8 +155,41 @@ export default function CheckoutPage() {
           setVouchers(vouchersRes);
         }
 
-        if (cartItems.length === 0) {
-          router.push('/cart');
+        // Tải thông tin sản phẩm mua ngay trực tiếp nếu có
+        if (buyNow && productId) {
+          const productRes = await fetch(`${API_URL}/products/${productId}`).then((r) => r.json());
+          if (productRes && productRes.success && productRes.data) {
+            const prod = productRes.data;
+            const activeVariant = prod.variants?.find((v: any) => v._id === variantId) || prod.variants?.[0] || {};
+            const rawThumb =
+              activeVariant.variantImage ||
+              prod.images?.find((img: any) => img.isThumbnail)?.url ||
+              prod.images?.[0]?.url ||
+              prod.imageUrl ||
+              '/placeholder-product.png';
+
+            const newItem = {
+              product: prod._id,
+              variant: activeVariant._id || 'default',
+              name: prod.name,
+              imageUrl: rawThumb.startsWith('http')
+                ? rawThumb
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'}${rawThumb}`,
+              quantity: qty,
+              price: activeVariant.price || prod.price || 0,
+              salePrice: activeVariant.salePrice || activeVariant.price || prod.price || 0,
+              selectedColor: activeVariant.color || '',
+              selectedStorage: activeVariant.ram && activeVariant.rom
+                ? `${activeVariant.ram}/${activeVariant.rom}`
+                : activeVariant.storage || '',
+              slug: prod.slug,
+              categorySlug: prod.category?.slug || 'dien-thoai',
+            };
+            setBuyNowItem(newItem);
+            setProductDetails((prev) => ({ ...prev, [prod._id]: prod }));
+          } else {
+            router.push('/cart');
+          }
         }
       } catch (err) {
         console.error('Failed to load checkout data', err);
@@ -158,7 +201,14 @@ export default function CheckoutPage() {
     if (mounted) {
       loadData();
     }
-  }, [router, mounted, cartItems.length]);
+  }, [router, mounted, buyNow, productId, variantId, qty]);
+
+  // Tự động chuyển hướng về /cart nếu giỏ hàng thường trống (chỉ áp dụng khi không phải mua ngay)
+  useEffect(() => {
+    if (mounted && !loading && !buyNow && cartItems.length === 0 && !isOrderCompleted) {
+      router.push('/cart');
+    }
+  }, [mounted, loading, buyNow, cartItems.length, isOrderCompleted, router]);
 
   // Tính chất tự động áp dụng và tính lại giá trị Voucher dựa trên các sản phẩm
   useEffect(() => {
@@ -411,19 +461,17 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (data.success) {
-        setAlert({
-          type: 'success',
-          message: 'Đặt hàng thành công! Đang chuyển hướng...',
-        });
+        setIsOrderCompleted(true);
 
-        // Xóa các sản phẩm đã thanh toán thành công khỏi store/giỏ hàng
-        for (const item of cartItems) {
-          await removeItem(item.product, item.variant);
+        // Xóa các sản phẩm đã thanh toán thành công khỏi store/giỏ hàng (nếu không phải mua ngay)
+        if (!buyNow) {
+          for (const item of cartItems) {
+            await removeItem(item.product, item.variant);
+          }
         }
 
-        setTimeout(() => {
-          router.push('/profile/orders');
-        }, 1500);
+        const orderId = data.data?._id || data.order?._id || data._id || '';
+        router.replace(`/checkout/success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${grandTotal}`);
       } else {
         setAlert({ type: 'error', message: data.message || 'Lỗi đặt hàng' });
         setSubmitting(false);
@@ -665,5 +713,25 @@ export default function CheckoutPage() {
         setAlert={setAlert}
       />
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className='min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8'>
+        <div className='relative flex items-center justify-center'>
+          <div className='h-12 w-12 animate-spin rounded-full border-3 border-didongviet-red border-t-transparent' />
+          <div className='absolute text-[9px] font-bold text-didongviet-red uppercase tracking-wider animate-pulse'>
+            DĐV
+          </div>
+        </div>
+        <p className='mt-3 text-xs font-medium text-slate-500 animate-pulse'>
+          Đang chuẩn bị trang thanh toán...
+        </p>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   );
 }

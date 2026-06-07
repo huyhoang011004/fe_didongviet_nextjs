@@ -15,7 +15,7 @@ export const CONTACT_INFO = {
 };
 
 export const CUSTOMER_SERVICES = [
-  { label: 'Tra cứu đơn hàng', link: '/tra-cuu-don-hang' },
+  { label: 'Tra cứu đơn hàng', link: '/track' },
   { label: 'Tìm cửa hàng gần bạn', link: '/he-thong-cua-hang' },
   { label: 'Chính sách bảo hành', link: '/chinh-sach-bao-hanh' },
   { label: 'Hướng dẫn trả góp', link: '/huong-dan-tra-gop' },

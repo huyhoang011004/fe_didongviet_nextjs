@@ -72,8 +72,8 @@ export function useShop() {
   }, []);
 
   // PHÂN LOẠI SẢN PHẨM THEO DANH MỤC & THƯƠNG HIỆU
-  const iphone16Products = allProducts.filter((p) =>
-    p.name.toLowerCase().includes('iphone 16'),
+  const iphoneProducts = allProducts.filter((p) =>
+    p.name.toLowerCase().includes('iphone'),
   );
 
   const samsungProducts = allProducts.filter(
@@ -176,7 +176,8 @@ export function useShop() {
       catName.includes('watch') ||
       catSlug.includes('smartwatch') ||
       catName.includes('đồng hồ') ||
-      catName.includes('dong-ho')
+      catName.includes('dong-ho') ||
+      catSlug.includes('dong-ho-thong-minh')
     );
   });
 
@@ -186,8 +187,9 @@ export function useShop() {
     return (
       catName.includes('phụ kiện') ||
       catSlug.includes('phu-kien') ||
-      catSlug.includes('sạc') ||
-      catSlug.includes('cáp')
+      catSlug.includes('cap-sac') ||
+      catSlug.includes('cu-sac') ||
+      catSlug.includes('pin-sac-du-phong')
     );
   });
 
@@ -198,7 +200,8 @@ export function useShop() {
       catName.includes('tai nghe') ||
       catName.includes('loa') ||
       catSlug.includes('am-thanh') ||
-      catSlug.includes('audio')
+      catSlug.includes('audio') ||
+      catSlug.includes('thiet-bi-am-thanh')
     );
   });
 
@@ -227,7 +230,7 @@ export function useShop() {
     allProducts,
     blogs,
     loading,
-    iphone16Products,
+    iphoneProducts,
     samsungProducts,
     oppoXiaomiProducts,
     ipadTabletProducts,

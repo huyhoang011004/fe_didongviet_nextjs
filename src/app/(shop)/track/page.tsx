@@ -78,15 +78,15 @@ export default function TrackingPage() {
         </div>
       </nav>
 
-      <div className='max-w-3xl mx-auto px-4 py-12'>
-        <div className='text-center mb-8 space-y-3'>
-          <div className='h-16 w-16 bg-didongviet-red/10 text-didongviet-red rounded-full flex items-center justify-center mx-auto mb-4'>
-            <PackageSearch size={32} />
+      <div className='max-w-3xl mx-auto px-4 py-6'>
+        <div className='text-center mb-6 space-y-2'>
+          <div className='h-12 w-12 bg-didongviet-red/10 text-didongviet-red rounded-full flex items-center justify-center mx-auto mb-2'>
+            <PackageSearch size={24} />
           </div>
-          <h1 className='text-2xl sm:text-3xl font-black text-slate-800 uppercase tracking-tight'>
+          <h1 className='text-xl sm:text-2xl font-black text-slate-800 uppercase tracking-tight'>
             Kiểm tra trạng thái đơn hàng
           </h1>
-          <p className='text-xs text-slate-500 max-w-md mx-auto leading-relaxed'>
+          <p className='text-[11px] text-slate-500 max-w-md mx-auto leading-relaxed'>
             Để tra cứu hành trình đơn hàng, quý khách vui lòng nhập chính xác{' '}
             <strong>Mã đơn hàng</strong> và <strong>Số điện thoại</strong> đã dùng để đặt hàng.
           </p>
@@ -166,12 +166,11 @@ export default function TrackingPage() {
                       <Package size={16} className='text-slate-400 mt-0.5' />
                       <div>
                         <p className='text-[11px] font-medium text-slate-500'>Trạng thái hiện tại</p>
-                        <p className={`text-sm font-bold ${
-                          result.status === 'Đã hoàn thành' ? 'text-green-600' :
-                          result.status === 'Đã hủy' ? 'text-red-600' :
-                          'text-amber-500'
-                        }`}>
-                          {result.status || 'Đang xử lý'}
+                        <p className={`text-sm font-bold ${result.status === 'Đã giao' ? 'text-green-600' :
+                            result.status === 'Đã hủy' ? 'text-red-600' :
+                              'text-amber-500'
+                          }`}>
+                          {result.status || 'Chờ xác nhận'}
                         </p>
                       </div>
                     </div>
@@ -196,9 +195,9 @@ export default function TrackingPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="pt-2">
-                     <p className="text-[10px] text-slate-400 italic text-center">Để xem chi tiết sản phẩm, vui lòng đăng nhập vào tài khoản của bạn.</p>
+                    <p className="text-[10px] text-slate-400 italic text-center">Để xem chi tiết sản phẩm, vui lòng đăng nhập vào tài khoản của bạn.</p>
                   </div>
                 </div>
               )}

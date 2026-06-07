@@ -21,7 +21,7 @@ export default function ShopHomepage() {
     flashSaleCampaign,
     blogs,
     loading,
-    iphone16Products,
+    iphoneProducts,
     samsungProducts,
     oppoXiaomiProducts,
     ipadTabletProducts,
@@ -41,8 +41,6 @@ export default function ShopHomepage() {
       <CategoriesSection categories={categories} allProducts={allProducts} />
 
       <div className='max-w-[1400px] mx-auto px-[30px] space-y-8 py-2'>
-        {/* ─── 2. DANH MỤC TRÒN NỔI BẬT ─── */}
-        {/* <CategoriesSection2 categories={categories} /> */}
 
         {/* ─── 3. BANNER NGANG KHUYẾN MÃI LỚN ─── */}
         <HorizontalBanner />
@@ -56,8 +54,8 @@ export default function ShopHomepage() {
 
         {/* ─── 5. SECTION SẢN PHẨM: IPHONE ─── */}
         <ProductSection
-          title='iPhone Chính Hãng (Apple Authorized Reseller)'
-          products={getFallbackList(iphone16Products)}
+          title='iPhone Chính Hãng'
+          products={getFallbackList(iphoneProducts)}
           loading={loading}
           themeColor='red'
           viewAllLink='/category/dien-thoai'
@@ -146,7 +144,7 @@ export default function ShopHomepage() {
           loading={loading}
           themeColor='purple'
           viewAllLink='/category/phu-kien'
-          tabs={['Xem tất cả', 'Cáp sạc', 'Sạc dự phòng', 'Anker', 'Baseus']}
+          tabs={['Xem tất cả', 'Cáp sạc', 'Củ sạc', 'Pin sạc dự phòng']}
         />
 
         {/* ─── SECTION SẢN PHẨM: SMARTWATCH ─── */}
@@ -166,7 +164,7 @@ export default function ShopHomepage() {
           loading={loading}
           themeColor='blue'
           viewAllLink='/category/phu-kien'
-          tabs={['Xem tất cả', 'AirPods', 'JBL', 'Marshall']}
+          tabs={['Xem tất cả', 'AirPods', 'Tai nghe Bluetooth', 'Loa Bluetooth']}
         />
 
         {/* ─── SECTION SẢN PHẨM: GIA DỤNG THÔNG MINH ─── */}

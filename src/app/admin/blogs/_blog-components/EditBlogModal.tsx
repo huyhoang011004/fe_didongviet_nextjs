@@ -20,6 +20,12 @@ export function EditBlogModal({
   editBlogPending,
 }: EditBlogModalProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [promptConfig, setPromptConfig] = React.useState<{
+    title: string;
+    placeholder: string;
+    onSubmit: (value: string) => void;
+  } | null>(null);
+  const [promptInputValue, setPromptInputValue] = React.useState('');
 
   const getYouTubeEmbedUrl = (urlOrId: string): string => {
     if (!urlOrId) return '';
@@ -60,36 +66,51 @@ export function EditBlogModal({
 
     textarea.value = value.substring(0, start) + replacement + value.substring(end);
     textarea.focus();
-    
+
     // Set selection
     const newCursorPos = start + replacement.length;
     textarea.setSelectionRange(newCursorPos, newCursorPos);
   };
 
   const handleInsertImage = () => {
-    const url = window.prompt('Nhập đường dẫn (URL) hình ảnh:');
-    if (!url) return;
-    const imgHtml = `\n<img src="${url}" alt="Hình ảnh bài viết" class="rounded-xl my-4 mx-auto max-w-full" />\n`;
-    insertAtCursor(imgHtml);
+    setPromptInputValue('');
+    setPromptConfig({
+      title: 'Chèn hình ảnh vào bài viết',
+      placeholder: 'Nhập đường dẫn (URL) hình ảnh (ví dụ: https://example.com/image.jpg)...',
+      onSubmit: (url) => {
+        const imgHtml = `\n<img src="${url}" alt="Hình ảnh bài viết" class="rounded-xl my-4 mx-auto max-w-full" />\n`;
+        insertAtCursor(imgHtml);
+      }
+    });
   };
 
   const handleInsertVideo = () => {
-    const url = window.prompt('Nhập đường dẫn (URL) video:');
-    if (!url) return;
-    const videoHtml = `\n<video src="${url}" controls class="w-full rounded-xl my-4"></video>\n`;
-    insertAtCursor(videoHtml);
+    setPromptInputValue('');
+    setPromptConfig({
+      title: 'Chèn video MP4 vào bài viết',
+      placeholder: 'Nhập đường dẫn (URL) video (ví dụ: https://example.com/video.mp4)...',
+      onSubmit: (url) => {
+        const videoHtml = `\n<video src="${url}" controls class="w-full rounded-xl my-4"></video>\n`;
+        insertAtCursor(videoHtml);
+      }
+    });
   };
 
   const handleInsertYoutube = () => {
-    const input = window.prompt('Nhập đường dẫn (URL) video YouTube hoặc ID video:');
-    if (!input) return;
-    const embedUrl = getYouTubeEmbedUrl(input);
-    if (!embedUrl) {
-      window.alert('Đường dẫn YouTube không hợp lệ!');
-      return;
-    }
-    const youtubeHtml = `\n<iframe src="${embedUrl}" class="w-full aspect-video rounded-xl my-4" allowfullscreen></iframe>\n`;
-    insertAtCursor(youtubeHtml);
+    setPromptInputValue('');
+    setPromptConfig({
+      title: 'Chèn video YouTube vào bài viết',
+      placeholder: 'Nhập đường dẫn (URL) hoặc ID video YouTube...',
+      onSubmit: (input) => {
+        const embedUrl = getYouTubeEmbedUrl(input);
+        if (!embedUrl) {
+          alert('Đường dẫn YouTube không hợp lệ!');
+          return;
+        }
+        const youtubeHtml = `\n<iframe src="${embedUrl}" class="w-full aspect-video rounded-xl my-4" allowfullscreen></iframe>\n`;
+        insertAtCursor(youtubeHtml);
+      }
+    });
   };
 
   if (!isOpen || !selectedBlog) return null;
@@ -290,6 +311,59 @@ export function EditBlogModal({
           </div>
         </form>
       </div>
+
+      {promptConfig && (
+        <div className='fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150'>
+          <div className='bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150 relative text-left'>
+            <div className='space-y-1.5'>
+              <h4 className='text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-tight'>
+                {promptConfig.title}
+              </h4>
+              <p className='text-xs font-semibold text-slate-500 dark:text-slate-400'>
+                Hãy dán liên kết (URL) vào ô bên dưới:
+              </p>
+            </div>
+            <input
+              type='text'
+              autoFocus
+              value={promptInputValue}
+              onChange={(e) => setPromptInputValue(e.target.value)}
+              placeholder={promptConfig.placeholder}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (promptInputValue.trim()) {
+                    promptConfig.onSubmit(promptInputValue.trim());
+                    setPromptConfig(null);
+                  }
+                }
+              }}
+              className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 text-xs font-medium focus:border-didongviet-red outline-none shadow-2xs transition-colors'
+            />
+            <div className='flex items-center gap-3 pt-2 justify-end'>
+              <button
+                type='button'
+                onClick={() => setPromptConfig(null)}
+                className='h-8 px-4 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 text-xs font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer'
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type='button'
+                onClick={() => {
+                  if (promptInputValue.trim()) {
+                    promptConfig.onSubmit(promptInputValue.trim());
+                    setPromptConfig(null);
+                  }
+                }}
+                className='h-8 px-4 rounded-lg bg-didongviet-red hover:bg-red-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs border-none'
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

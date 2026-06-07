@@ -1,13 +1,13 @@
 'use client';
 
-import { X, MapPin, Clock, Truck, AlertTriangle } from 'lucide-react';
+import { X, MapPin, Clock, Truck, AlertTriangle, Check, PackageCheck } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
   order: any | null;
   onClose: () => void;
-  onShip: (id: string) => void;
+  onUpdateStatus: (id: string, status: string) => void;
   onDeleteClick: () => void;
 }
 
@@ -23,13 +23,46 @@ const formatDate = (dateStr: string) => {
 };
 
 const ORDER_STATUS_STYLE: Record<string, string> = {
-  'Đã hoàn thành': 'bg-emerald-50 text-emerald-600 border-emerald-200',
-  'Đang giao hàng': 'bg-blue-50 text-blue-600 border-blue-200',
+  'Chờ xác nhận': 'bg-amber-50 text-amber-600 border-amber-200',
+  'Chờ lấy hàng': 'bg-indigo-50 text-indigo-600 border-indigo-200',
+  'Đã giao': 'bg-emerald-50 text-emerald-600 border-emerald-200',
+  'Đang giao': 'bg-blue-50 text-blue-600 border-blue-200',
   'Đã hủy': 'bg-red-50 text-red-600 border-red-200',
+  'Trả hàng/Hoàn tiền': 'bg-orange-50 text-orange-600 border-orange-200',
 };
 
-export function OrderDetailsModal({ isOpen, order, onClose, onShip, onDeleteClick }: OrderDetailsModalProps) {
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  'Chờ xác nhận': 'Chờ xác nhận',
+  'Chờ lấy hàng': 'Chờ lấy hàng',
+  'Đang giao': 'Đang giao',
+  'Đã giao': 'Đã giao',
+  'Đã hủy': 'Đã hủy',
+  'Trả hàng/Hoàn tiền': 'Trả hàng/Hoàn tiền',
+};
+
+const STATUS_ACTIONS: Record<string, { label: string; nextStatus: string; icon: typeof Check }> = {
+  'Chờ xác nhận': { label: 'Duyệt', nextStatus: 'Chờ lấy hàng', icon: Check },
+  'Chờ lấy hàng': { label: 'Chuẩn bị hàng', nextStatus: 'Đang giao', icon: PackageCheck },
+  'Đang giao': { label: 'Đã giao', nextStatus: 'Đã giao', icon: Truck },
+};
+
+const getVariantLabel = (item: any) => {
+  const variantId = String(item.variantId?._id || item.variantId || '');
+  const variant = item.product?.variants?.find((v: any) => String(v._id) === variantId);
+  const color = item.selectedColor || variant?.color || '';
+  const ramRom = item.selectedStorage || (variant?.ram && variant?.rom ? `${variant.ram}/${variant.rom}` : '');
+  const parts = [
+    color ? `Màu sắc: ${color}` : '',
+    ramRom ? `RAM/ROM: ${ramRom}` : '',
+  ].filter(Boolean);
+
+  return parts.length ? parts.join(' | ') : 'Chưa có thông tin phân loại';
+};
+
+export function OrderDetailsModal({ isOpen, order, onClose, onUpdateStatus, onDeleteClick }: OrderDetailsModalProps) {
   if (!isOpen || !order) return null;
+  const action = STATUS_ACTIONS[order.orderStatus];
+  const ActionIcon = action?.icon;
 
   return (
     <div className='fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200'>
@@ -103,7 +136,7 @@ export function OrderDetailsModal({ isOpen, order, onClose, onShip, onDeleteClic
                     </div>
                     <div className='truncate'>
                       <span className='font-bold text-slate-900 dark:text-white block truncate text-xs sm:text-sm'>{item.name}</span>
-                      <span className='text-[10px] text-slate-400 block mt-0.5 font-mono'>SKU: {item.product}</span>
+                      <span className='text-[10px] text-slate-400 block mt-0.5'>{getVariantLabel(item)}</span>
                     </div>
                   </div>
                   <div className='text-right flex-shrink-0'>
@@ -122,20 +155,20 @@ export function OrderDetailsModal({ isOpen, order, onClose, onShip, onDeleteClic
               <span className='font-semibold'>{formatVND(order.itemsPrice || 0)}</span>
             </div>
             {order.discountDMember > 0 && (
-              <div className='flex justify-between text-xs text-purple-600 font-semibold'>
-                <span>Ưu đãi thành viên D.Member:</span>
+              <div className='flex justify-between text-xs text-green-600 font-semibold'>
+                <span>Voucher giảm giá:</span>
                 <span>- {formatVND(order.discountDMember)}</span>
               </div>
             )}
             {order.tradeInBonus > 0 && (
-              <div className='flex justify-between text-xs text-blue-600 font-semibold'>
+              <div className='flex justify-between text-xs text-blue-700 font-semibold'>
                 <span>Trợ giá Thu cũ đổi mới:</span>
                 <span>- {formatVND(order.tradeInBonus)}</span>
               </div>
             )}
-            <div className='flex justify-between text-xs'>
-              <span className='text-slate-400'>Phí vận chuyển GHN:</span>
-              <span className='font-semibold'>{formatVND(order.shippingPrice || 0)}</span>
+            <div className='flex justify-between text-xs text-blue-400 font-semibold'>
+              <span >Phí vận chuyển:</span>
+              <span >{formatVND(order.shippingPrice || 0)}</span>
             </div>
             <div className='flex justify-between text-base font-black pt-2'>
               <span className='text-slate-800 dark:text-white'>TỔNG HÓA ĐƠN THỰC THU:</span>
@@ -148,15 +181,14 @@ export function OrderDetailsModal({ isOpen, order, onClose, onShip, onDeleteClic
             <div className='flex items-center gap-2'>
               <span className={`h-2.5 w-2.5 rounded-full ${order.isPaid ? 'bg-emerald-500' : 'bg-amber-500'}`} />
               <span className='text-xs font-bold text-slate-500 uppercase'>
-                {order.isPaid ? 'ĐÃ THANH TOÁN THÀNH CÔNG' : 'CHỜ THANH TOÁN (COD / CỔNG)'}
+                {order.isPaid ? 'ĐÃ THANH TOÁN THÀNH CÔNG' : 'CHỜ THANH TOÁN COD / CỔNG THANH TOÁN'}
               </span>
             </div>
             <span
-              className={`px-2.5 py-1.5 rounded-xl text-[10px] font-bold border uppercase ${
-                ORDER_STATUS_STYLE[order.orderStatus] ?? 'bg-amber-50 text-amber-600 border-amber-200'
-              }`}
+              className={`px-2.5 py-1.5 rounded-xl text-[10px] font-bold border uppercase ${ORDER_STATUS_STYLE[order.orderStatus] ?? 'bg-amber-50 text-amber-600 border-amber-200'
+                }`}
             >
-              {order.orderStatus}
+              {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
             </span>
           </div>
         </div>
@@ -180,13 +212,13 @@ export function OrderDetailsModal({ isOpen, order, onClose, onShip, onDeleteClic
               Đóng
             </Button>
 
-            {!order.isDelivered && order.orderStatus !== 'Đã hủy' && (
+            {action && ActionIcon && (
               <button
-                onClick={() => onShip(order._id)}
+                onClick={() => onUpdateStatus(order._id, action.nextStatus)}
                 className='flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-700 rounded-xl transition-all shadow-md cursor-pointer border-none'
               >
-                <Truck size={14} />
-                <span>Xác nhận giao hàng</span>
+                <ActionIcon size={14} />
+                <span>{action.label}</span>
               </button>
             )}
           </div>

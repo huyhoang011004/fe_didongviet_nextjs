@@ -207,7 +207,10 @@ export default function ProductInfo({
         product.variants.length > 0 &&
         (() => {
           const ramRoms = Array.from(
-            new Set(product.variants.map((v: any) => `${v.ram}/${v.rom}`)),
+            new Set(
+              product.variants
+                .filter((v: any) => v.ram !== undefined && v.rom !== undefined)
+                .map((v: any) => `${v.ram}/${v.rom}`))
           );
           const colors = Array.from(
             new Set(product.variants.map((v: any) => v.color)),
@@ -259,44 +262,45 @@ export default function ProductInfo({
           return (
             <div className='space-y-3.5'>
               {/* Chọn Cấu hình RAM/ROM */}
-              <div className='space-y-1.5'>
-                <span className='text-[10px] font-black text-slate-800 uppercase block tracking-wider flex items-center gap-1.5'>
-                  <Layers size={12} className='text-didongviet-red' />
-                  <span>Chọn cấu hình / dung lượng</span>
-                </span>
-                <div className='flex flex-wrap gap-2'>
-                  {ramRoms.map((rr: any, idx: number) => {
-                    const isSelected = rr === currentRamRom;
-                    const matchingVariants = product.variants.filter(
-                      (v: any) => `${v.ram}/${v.rom}` === rr,
-                    );
-                    const minValPrice = Math.min(
-                      ...matchingVariants.map(
-                        (v: any) => v.salePrice || v.price || 0,
-                      ),
-                    );
+              {ramRoms.length > 0 && ramRoms[0] !== 'undefined/undefined' && (
+                <div className='space-y-1.5'>
+                  <span className='text-[10px] font-black text-slate-800 uppercase block tracking-wider flex items-center gap-1.5'>
+                    <Layers size={12} className='text-didongviet-red' />
+                    <span>Chọn cấu hình / dung lượng</span>
+                  </span>
+                  <div className='flex flex-wrap gap-2'>
+                    {ramRoms.map((rr: any, idx: number) => {
+                      const isSelected = rr === currentRamRom;
+                      const matchingVariants = product.variants.filter(
+                        (v: any) => `${v.ram}/${v.rom}` === rr,
+                      );
+                      const minValPrice = Math.min(
+                        ...matchingVariants.map(
+                          (v: any) => v.salePrice || v.price || 0,
+                        ),
+                      );
 
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => handleSelectRamRom(rr)}
-                        className={`px-3 py-2 rounded-lg border text-left cursor-pointer transition-all text-xs font-bold flex flex-col justify-between min-w-[100px]
-                        ${
-                          isSelected
-                            ? 'border-didongviet-red bg-red-50/20 text-didongviet-red shadow-2xs'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                        }
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleSelectRamRom(rr)}
+                          className={`px-3 py-2 rounded-lg border text-left cursor-pointer transition-all text-xs font-bold flex flex-col justify-between min-w-[100px]
+                        ${isSelected
+                              ? 'border-didongviet-red bg-red-50/20 text-didongviet-red shadow-2xs'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                            }
                       `}
-                      >
-                        <span>{rr}</span>
-                        <span className='text-[9px] font-semibold text-slate-400 font-mono mt-0.5'>
-                          Từ {formatVND(minValPrice)}
-                        </span>
-                      </button>
-                    );
-                  })}
+                        >
+                          <span>{rr}</span>
+                          <span className='text-[9px] font-semibold text-slate-400 font-mono mt-0.5'>
+                            Từ {formatVND(minValPrice)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Chọn Màu sắc */}
               <div className='space-y-1.5'>
@@ -321,11 +325,10 @@ export default function ProductInfo({
                         key={idx}
                         onClick={() => handleSelectColor(col)}
                         className={`px-3 py-2 rounded-lg border text-left cursor-pointer transition-all text-xs font-bold flex flex-col justify-between min-w-[100px]
-                        ${
-                          isSelected
+                        ${isSelected
                             ? 'border-didongviet-red bg-red-50/20 text-didongviet-red shadow-2xs'
                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                        }
+                          }
                       `}
                       >
                         <span>{col}</span>

@@ -141,40 +141,7 @@ export function useProductDetail(id: string) {
 
     setIsBuyingNow(true);
     try {
-      const rawThumb =
-        activeVariant.variantImage ||
-        product.images?.find((img: any) => img.isThumbnail)?.url ||
-        product.images?.[0]?.url ||
-        product.imageUrl ||
-        '/placeholder-product.png';
-
-      const newItem = {
-        product: product._id,
-        variant: activeVariant._id,
-        name: product.name,
-        imageUrl: rawThumb.startsWith('http')
-          ? rawThumb
-          : `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'}${rawThumb}`,
-        quantity: cartQty,
-        price: activeVariant.price,
-        salePrice: activeVariant.salePrice || activeVariant.price,
-        selectedColor: activeVariant.color,
-        selectedStorage: activeVariant.ram && activeVariant.rom
-          ? `${activeVariant.ram}/${activeVariant.rom}`
-          : activeVariant.storage || '',
-        slug: product.slug,
-        categorySlug: product.category?.slug || 'dien-thoai',
-      };
-
-      const success = await useCartStore.getState().addItem(newItem);
-      if (success) {
-        router.push('/cart');
-      } else {
-        setAlert({
-          type: 'error',
-          message: 'Không thể tiến hành mua ngay',
-        });
-      }
+      router.push(`/checkout?buyNow=true&productId=${product._id}&variantId=${activeVariant._id}&qty=${cartQty}`);
     } catch (error) {
       setAlert({ type: 'error', message: 'Lỗi kết nối khi tiến hành mua ngay' });
     } finally {
