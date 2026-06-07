@@ -12,7 +12,10 @@ import {
   ChevronRight,
   Package,
   Ticket,
+  Camera,
 } from 'lucide-react';
+
+const API_URL = process.env.API_URL || 'http://localhost:5000';
 
 export const ProfileContext = createContext<any>(null);
 
@@ -27,6 +30,7 @@ export default function ProfileLayout({
   const [user, setUser] = useState<any>(null);
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const loadProfile = async () => {
     try {
@@ -50,6 +54,54 @@ export default function ProfileLayout({
   useEffect(() => {
     loadProfile();
   }, [router]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file ảnh hợp lệ');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Kích thước ảnh tối đa 5MB');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const res = await fetch('/api/auth/avatar', {
+        method: 'PUT',
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        setUser(data.data);
+      } else {
+        alert(data.message || 'Có lỗi khi upload ảnh');
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      alert('Lỗi kết nối máy chủ');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const getAvatarUrl = (avatar: string | undefined) => {
+    if (!avatar) return undefined;
+    // If avatar is already a full URL, use it directly
+    if (avatar.startsWith('http')) return avatar;
+    // Otherwise prepend the API base URL
+    return `${API_URL}${avatar}`;
+  };
 
   const handleLogout = async () => {
     try {
@@ -101,8 +153,33 @@ export default function ProfileLayout({
           <aside className='lg:col-span-1 space-y-4 h-fit sticky top-20'>
             {/* THÔNG TIN TÀI KHOẢN MINI */}
             <div className='bg-white rounded-xl border border-slate-100 p-4 shadow-xs flex items-center gap-3.5'>
-              <div className='h-12 w-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0'>
-                <User size={22} className='text-slate-400' />
+              <div className='relative group shrink-0'>
+                <div className='h-14 w-14 rounded-full bg-slate-50 border-2 border-slate-200 flex items-center justify-center overflow-hidden'>
+                  {getAvatarUrl(user.avatar) ? (
+                    <img
+                      src={getAvatarUrl(user.avatar)}
+                      alt={user.name || 'Avatar'}
+                      className='h-full w-full object-cover'
+                    />
+                  ) : (
+                    <User size={26} className='text-slate-400' />
+                  )}
+                </div>
+                {/* Upload overlay */}
+                <label className='absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer'>
+                  {avatarUploading ? (
+                    <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                  ) : (
+                    <Camera size={18} className='text-white' />
+                  )}
+                  <input
+                    type='file'
+                    accept='image/jpeg,image/png,image/webp,image/avif'
+                    className='hidden'
+                    onChange={handleAvatarUpload}
+                    disabled={avatarUploading}
+                  />
+                </label>
               </div>
               <div className='min-w-0 flex-1 space-y-1'>
                 <h4 className='text-xs font-black text-slate-800 truncate leading-snug'>
