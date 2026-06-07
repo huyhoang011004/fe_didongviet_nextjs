@@ -26,6 +26,14 @@ interface Review {
     verified?: boolean;
 }
 
+const API_URL = process.env.API_URL || 'http://localhost:5000';
+
+function getAvatarUrl(avatar: string | undefined): string | undefined {
+    if (!avatar) return undefined;
+    if (avatar.startsWith('http')) return avatar;
+    return `${API_URL}${avatar}`;
+}
+
 export default function ProductReviews({ product }: ProductReviewsProps) {
     const [expandedReview, setExpandedReview] = useState<string | null>(null);
     const [helpfulReviews, setHelpfulReviews] = useState<Set<string>>(new Set());
@@ -161,8 +169,8 @@ export default function ProductReviews({ product }: ProductReviewsProps) {
                                     key={i}
                                     size={14}
                                     className={`${i < Math.floor(avgRating)
-                                            ? 'fill-amber-500 text-amber-500'
-                                            : 'text-slate-200'
+                                        ? 'fill-amber-500 text-amber-500'
+                                        : 'text-slate-200'
                                         }`}
                                 />
                             ))}
@@ -228,9 +236,11 @@ export default function ProductReviews({ product }: ProductReviewsProps) {
                                 <div className='flex items-start gap-3 mb-3'>
                                     <div className='w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg shrink-0 overflow-hidden border border-slate-100'>
                                         {review.user?.avatar ? (
-                                            <img src={review.user.avatar} alt={review.user.name} className='h-full w-full object-cover' />
+                                            <img src={getAvatarUrl(review.user.avatar)} alt={review.user.name} className='h-full w-full object-cover' />
+                                        ) : review.avatar ? (
+                                            <span className='text-xs font-bold text-slate-500'>{review.avatar}</span>
                                         ) : (
-                                            review.avatar || '👤'
+                                            <span className='text-lg'>👤</span>
                                         )}
                                     </div>
                                     <div className='flex-1 min-w-0'>
@@ -249,8 +259,8 @@ export default function ProductReviews({ product }: ProductReviewsProps) {
                                                         key={i}
                                                         size={12}
                                                         className={`${i < review.rating
-                                                                ? 'fill-amber-500 text-amber-500'
-                                                                : 'text-slate-200'
+                                                            ? 'fill-amber-500 text-amber-500'
+                                                            : 'text-slate-200'
                                                             }`}
                                                     />
                                                 ))}
@@ -291,8 +301,8 @@ export default function ProductReviews({ product }: ProductReviewsProps) {
                                     <button
                                         onClick={() => handleHelpful(review._id)}
                                         className={`text-[10px] font-semibold flex items-center gap-1 px-2 py-1 rounded transition-colors ${helpfulReviews.has(review._id)
-                                                ? 'bg-red-100 text-didongviet-red'
-                                                : 'text-slate-500 hover:bg-slate-50'
+                                            ? 'bg-red-100 text-didongviet-red'
+                                            : 'text-slate-500 hover:bg-slate-50'
                                             }`}
                                     >
                                         <ThumbsUp size={11} />
