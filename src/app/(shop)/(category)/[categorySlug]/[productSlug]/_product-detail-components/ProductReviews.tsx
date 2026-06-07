@@ -24,6 +24,8 @@ interface Review {
     createdAt: string;
     helpful: number;
     verified?: boolean;
+    images?: string[];
+    video?: string;
 }
 
 const API_URL = process.env.API_URL || 'http://localhost:5000';
@@ -282,6 +284,31 @@ export default function ProductReviews({ product }: ProductReviewsProps) {
                                 >
                                     {review.content}
                                 </p>
+
+                                {/* Review images & video list */}
+                                {(review.images && review.images.length > 0 || review.video) && (
+                                    <div className='flex flex-wrap gap-2 mb-3'>
+                                        {review.video && (
+                                            <div className='relative h-16 w-24 rounded-lg overflow-hidden border border-slate-100 bg-black'>
+                                                <video
+                                                    src={getAvatarUrl(review.video)}
+                                                    controls
+                                                    className='h-full w-full object-cover'
+                                                />
+                                            </div>
+                                        )}
+                                        {review.images?.map((img, i) => (
+                                            <div key={i} className='relative h-16 w-16 rounded-lg overflow-hidden border border-slate-100 bg-slate-50'>
+                                                <img
+                                                    src={getAvatarUrl(img)}
+                                                    alt={`Đánh giá ảnh ${i + 1}`}
+                                                    className='h-full w-full object-cover cursor-zoom-in'
+                                                    onClick={() => window.open(getAvatarUrl(img), '_blank')}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
                                 {review.content.length > 150 && (
                                     <button

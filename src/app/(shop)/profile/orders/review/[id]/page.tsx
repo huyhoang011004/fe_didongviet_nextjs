@@ -14,11 +14,17 @@ export default function ReviewOrderPage() {
     loading,
     ratings,
     comments,
+    imagePreviews,
+    videoPreview,
     submitting,
     isExpired,
     alert,
     updateRating,
     updateComment,
+    handleAddImages,
+    handleRemoveImage,
+    handleAddVideo,
+    handleRemoveVideo,
     handleSubmit,
   } = useReview(id);
 
@@ -44,7 +50,7 @@ export default function ReviewOrderPage() {
   }
 
   return (
-    <div className='bg-white rounded-xl border border-slate-100 shadow-xs p-5 space-y-6 animate-in fade-in duration-300 relative'>
+    <div className='bg-white rounded-xl border border-slate-100 shadow-xs p-5 space-y-6 animate-in fade-in duration-300 relative text-left'>
       {/* Alert toast */}
       {alert && (
         <div
@@ -86,8 +92,14 @@ export default function ReviewOrderPage() {
         order={order}
         ratings={ratings}
         comments={comments}
+        imagePreviews={imagePreviews}
+        videoPreview={videoPreview}
         updateRating={updateRating}
         updateComment={updateComment}
+        onAddImages={handleAddImages}
+        onRemoveImage={handleRemoveImage}
+        onAddVideo={handleAddVideo}
+        onRemoveVideo={handleRemoveVideo}
         submitting={submitting}
         isExpired={isExpired}
         onSubmit={handleSubmit}

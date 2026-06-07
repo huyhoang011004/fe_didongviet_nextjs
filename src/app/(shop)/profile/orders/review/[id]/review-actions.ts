@@ -13,13 +13,28 @@ export async function getOrderById(orderId: string) {
   }
 }
 
-export async function submitProductReview(productId: string, payload: { rating: number; content: string; orderId: string; images?: string[] }) {
+export async function submitProductReview(
+  productId: string,
+  payload: { rating: number; content: string; orderId: string; reviewImages?: File[]; reviewVideo?: File }
+) {
+  const formData = new FormData();
+  formData.append('rating', payload.rating.toString());
+  formData.append('content', payload.content);
+  formData.append('orderId', payload.orderId);
+
+  if (payload.reviewImages && payload.reviewImages.length > 0) {
+    payload.reviewImages.forEach((imgFile) => {
+      formData.append('reviewImages', imgFile);
+    });
+  }
+
+  if (payload.reviewVideo) {
+    formData.append('reviewVideo', payload.reviewVideo);
+  }
+
   const res = await fetch(`/api/reviews/product/${productId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
+    body: formData,
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

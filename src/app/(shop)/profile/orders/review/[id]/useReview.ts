@@ -8,6 +8,15 @@ export function useReview(orderId: string) {
   const [loading, setLoading] = useState(true);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
+
+  // File upload states per product ID
+  const [reviewImages, setReviewImages] = useState<Record<string, File[]>>({});
+  const [reviewVideo, setReviewVideo] = useState<Record<string, File | undefined>>({});
+
+  // Preview URLs states per product ID
+  const [imagePreviews, setImagePreviews] = useState<Record<string, string[]>>({});
+  const [videoPreview, setVideoPreview] = useState<Record<string, string | undefined>>({});
+
   const [submitting, setSubmitting] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -19,7 +28,7 @@ export function useReview(orderId: string) {
       const res = await getOrderById(orderId);
       if (res.success && res.data) {
         setOrder(res.data);
-        
+
         // Kiểm tra thời hạn 30 ngày kể từ lúc giao thành công (deliveredAt)
         const thirtyDays = 30 * 24 * 60 * 60 * 1000;
         const isPast30Days = res.data.deliveredAt
@@ -44,15 +53,23 @@ export function useReview(orderId: string) {
         // Khởi tạo rating và bình luận cho mỗi sản phẩm
         const initialRatings: Record<string, number> = {};
         const initialComments: Record<string, string> = {};
+        const initialImagePreviews: Record<string, string[]> = {};
+        const initialVideoPreviews: Record<string, string | undefined> = {};
+
         res.data.orderItems?.forEach((item: any) => {
           const productId = typeof item.product === 'object' && item.product ? item.product._id : item.product;
-          
+
           const matchedReview = existingReviews.find((r) => r.product === productId);
           initialRatings[productId] = matchedReview ? matchedReview.rating : 5; // Mặc định 5 sao hoặc số sao cũ
           initialComments[productId] = matchedReview ? matchedReview.content : ''; // Bình luận cũ hoặc rỗng
+          initialImagePreviews[productId] = matchedReview && matchedReview.images ? matchedReview.images : [];
+          initialVideoPreviews[productId] = matchedReview && matchedReview.video ? matchedReview.video : undefined;
         });
+
         setRatings(initialRatings);
         setComments(initialComments);
+        setImagePreviews(initialImagePreviews);
+        setVideoPreview(initialVideoPreviews);
       } else {
         setAlert({ type: 'error', message: res.message || 'Không tìm thấy đơn hàng' });
       }
@@ -78,6 +95,88 @@ export function useReview(orderId: string) {
     setComments((prev) => ({ ...prev, [productId]: comment }));
   };
 
+  const handleAddImages = (productId: string, files: FileList | null) => {
+    if (!files) return;
+    const incomingFiles = Array.from(files);
+
+    // Validate image files and max limit (6 images)
+    const validFiles = incomingFiles.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isUnder2MB = file.size <= 2 * 1024 * 1024;
+      if (!isImage) {
+        setAlert({ type: 'error', message: 'Vui lòng chỉ chọn tệp hình ảnh!' });
+        return false;
+      }
+      if (!isUnder2MB) {
+        setAlert({ type: 'error', message: 'Kích thước ảnh không quá 2MB!' });
+        return false;
+      }
+      return true;
+    });
+
+    setReviewImages((prev) => {
+      const currentList = prev[productId] || [];
+      const updatedList = [...currentList, ...validFiles].slice(0, 6);
+
+      // Update image previews
+      const previews = updatedList.map(f => URL.createObjectURL(f));
+      setImagePreviews((prevPreviews) => ({ ...prevPreviews, [productId]: previews }));
+
+      return { ...prev, [productId]: updatedList };
+    });
+  };
+
+  const handleRemoveImage = (productId: string, index: number) => {
+    setReviewImages((prev) => {
+      const currentList = prev[productId] || [];
+      const updatedList = currentList.filter((_, i) => i !== index);
+
+      // Clean up revoke object url for deleted file
+      if (imagePreviews[productId]?.[index] && imagePreviews[productId][index].startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviews[productId][index]);
+      }
+
+      const previews = (imagePreviews[productId] || []).filter((_, i) => i !== index);
+      setImagePreviews((prevPreviews) => ({ ...prevPreviews, [productId]: previews }));
+
+      return { ...prev, [productId]: updatedList };
+    });
+  };
+
+  const handleAddVideo = (productId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    const isVideo = file.type.startsWith('video/');
+    if (!isVideo) {
+      setAlert({ type: 'error', message: 'Vui lòng chỉ chọn tệp video!' });
+      return;
+    }
+
+    // Preview and validate duration if possible
+    const previewUrl = URL.createObjectURL(file);
+    const videoElement = document.createElement('video');
+    videoElement.src = previewUrl;
+    videoElement.onloadedmetadata = () => {
+      if (videoElement.duration > 60) {
+        setAlert({ type: 'error', message: 'Thời lượng video tối đa là 1 phút!' });
+        URL.revokeObjectURL(previewUrl);
+        return;
+      }
+
+      setReviewVideo((prev) => ({ ...prev, [productId]: file }));
+      setVideoPreview((prev) => ({ ...prev, [productId]: previewUrl }));
+    };
+  };
+
+  const handleRemoveVideo = (productId: string) => {
+    if (videoPreview[productId] && videoPreview[productId]?.startsWith('blob:')) {
+      URL.revokeObjectURL(videoPreview[productId]!);
+    }
+    setReviewVideo((prev) => ({ ...prev, [productId]: undefined }));
+    setVideoPreview((prev) => ({ ...prev, [productId]: undefined }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!order || !order.orderItems || order.orderItems.length === 0) return;
@@ -93,13 +192,21 @@ export function useReview(orderId: string) {
         const productId = typeof item.product === 'object' && item.product ? item.product._id : item.product;
         const rating = ratings[productId] || 5;
         const content = comments[productId]?.trim() || 'Sản phẩm tuyệt vời!';
-        
-        return submitProductReview(productId, { rating, content, orderId });
+        const imagesList = reviewImages[productId] || [];
+        const videoFile = reviewVideo[productId];
+
+        return submitProductReview(productId, {
+          rating,
+          content,
+          orderId,
+          reviewImages: imagesList,
+          reviewVideo: videoFile
+        });
       });
 
       const results = await Promise.allSettled(reviewPromises);
       const failed = results.filter(r => r.status === 'rejected');
-      
+
       if (failed.length > 0) {
         setAlert({ type: 'error', message: 'Gửi một số đánh giá thất bại.' });
       } else {
@@ -120,12 +227,18 @@ export function useReview(orderId: string) {
     loading,
     ratings,
     comments,
+    imagePreviews,
+    videoPreview,
     submitting,
     isExpired,
     alert,
     setAlert,
     updateRating,
     updateComment,
+    handleAddImages,
+    handleRemoveImage,
+    handleAddVideo,
+    handleRemoveVideo,
     handleSubmit,
   };
 }
