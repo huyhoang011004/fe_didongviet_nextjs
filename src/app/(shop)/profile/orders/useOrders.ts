@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getMyOrders, cancelOrder, confirmOrderReceived } from './orders-actions';
+import { getMyOrders, cancelOrder, confirmOrderReceived, getReviewsByOrderId } from './orders-actions';
 
 export const normalizeOrderStatus = (status?: string) => {
   const statusMap: Record<string, string> = {
@@ -27,13 +27,34 @@ export function useOrders() {
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
   const [receiveConfirmId, setReceiveConfirmId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [reviewedOrderIds, setReviewedOrderIds] = useState<Set<string>>(new Set());
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const data = await getMyOrders();
       if (data.success) {
-        setOrders((data.data || []).map(normalizeOrder));
+        const normalizedOrders = (data.data || []).map(normalizeOrder);
+        setOrders(normalizedOrders);
+
+        // Check which orders have reviews (only for delivered orders)
+        const deliveredOrders = normalizedOrders.filter((o: any) => o.orderStatus === 'Đã giao');
+        const reviewedIds = new Set<string>();
+
+        await Promise.all(
+          deliveredOrders.map(async (order: any) => {
+            try {
+              const reviewsRes = await getReviewsByOrderId(order._id);
+              if (reviewsRes.success && Array.isArray(reviewsRes.data) && reviewsRes.data.length > 0) {
+                reviewedIds.add(order._id);
+              }
+            } catch (e) {
+              console.error('Error checking reviews for order:', order._id, e);
+            }
+          })
+        );
+
+        setReviewedOrderIds(reviewedIds);
       }
     } catch (err: any) {
       console.error('Lỗi khi tải đơn hàng:', err);
@@ -111,6 +132,7 @@ export function useOrders() {
     handleCancel,
     handleConfirmReceipt,
     getFilteredOrders,
-    fetchOrders
+    fetchOrders,
+    reviewedOrderIds,
   };
 }

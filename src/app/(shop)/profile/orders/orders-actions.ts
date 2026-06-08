@@ -28,3 +28,11 @@ export async function confirmOrderReceived(orderId: string) {
   }
   return res.json();
 }
+
+export async function getReviewsByOrderId(orderId: string) {
+  const res = await fetch(`/api/reviews/order/${orderId}`);
+  if (!res.ok) {
+    return { success: false, data: [] };
+  }
+  return res.json();
+}

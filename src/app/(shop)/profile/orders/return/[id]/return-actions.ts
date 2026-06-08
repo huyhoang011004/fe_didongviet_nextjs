@@ -13,13 +13,26 @@ export async function getOrderById(orderId: string) {
   }
 }
 
-export async function submitReturnRequest(orderId: string, payload: { reason: string; images: string[]; videos: string[] }) {
+export async function submitReturnRequest(
+  orderId: string,
+  payload: { reason: string; returnImages?: File[]; returnVideo?: File }
+) {
+  const formData = new FormData();
+  formData.append('reason', payload.reason);
+
+  if (payload.returnImages && payload.returnImages.length > 0) {
+    payload.returnImages.forEach((imgFile) => {
+      formData.append('returnImages', imgFile);
+    });
+  }
+
+  if (payload.returnVideo) {
+    formData.append('returnVideo', payload.returnVideo);
+  }
+
   const res = await fetch(`/api/orders/${orderId}/return`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
+    body: formData,
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

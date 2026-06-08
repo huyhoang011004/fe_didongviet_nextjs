@@ -8,8 +8,15 @@ export function useReturn(orderId: string) {
   const [loading, setLoading] = useState(true);
   const [reason, setReason] = useState('');
   const [selectedReason, setSelectedReason] = useState('Sản phẩm bị lỗi kỹ thuật');
-  const [images, setImages] = useState<string[]>([]);
-  const [videos, setVideos] = useState<string[]>([]);
+
+  // File upload states (up to 6 images and 1 video)
+  const [returnImages, setReturnImages] = useState<File[]>([]);
+  const [returnVideo, setReturnVideo] = useState<File | undefined>(undefined);
+
+  // Local blob previews
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [videoPreview, setVideoPreview] = useState<string | undefined>(undefined);
+
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -47,8 +54,8 @@ export function useReturn(orderId: string) {
       const fullReason = `[${selectedReason}] - ${reason}`;
       const res = await submitReturnRequest(orderId, {
         reason: fullReason,
-        images,
-        videos,
+        returnImages,
+        returnVideo,
       });
 
       if (res.success) {
@@ -66,30 +73,76 @@ export function useReturn(orderId: string) {
     }
   };
 
-  const handleAddImage = (url: string) => {
-    if (!url.trim()) return;
-    if (images.length >= 6) {
-      setAlert({ type: 'error', message: 'Tối đa chỉ được đính kèm 6 hình ảnh' });
-      return;
-    }
-    setImages((prev) => [...prev, url]);
+  const handleAddImages = (files: FileList | null) => {
+    if (!files) return;
+    const incomingFiles = Array.from(files);
+
+    // Validate image files and max limit (6 images)
+    const validFiles = incomingFiles.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isUnder2MB = file.size <= 2 * 1024 * 1024;
+      if (!isImage) {
+        setAlert({ type: 'error', message: 'Vui lòng chỉ chọn tệp hình ảnh!' });
+        return false;
+      }
+      if (!isUnder2MB) {
+        setAlert({ type: 'error', message: 'Kích thước ảnh không quá 2MB!' });
+        return false;
+      }
+      return true;
+    });
+
+    setReturnImages((prev) => {
+      const updatedList = [...prev, ...validFiles].slice(0, 6);
+      const previews = updatedList.map(f => URL.createObjectURL(f));
+      setImagePreviews(previews);
+      return updatedList;
+    });
   };
 
   const handleRemoveImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setReturnImages((prev) => {
+      const updatedList = prev.filter((_, i) => i !== index);
+      if (imagePreviews[index] && imagePreviews[index].startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviews[index]);
+      }
+      const previews = imagePreviews.filter((_, i) => i !== index);
+      setImagePreviews(previews);
+      return updatedList;
+    });
   };
 
-  const handleAddVideo = (url: string) => {
-    if (!url.trim()) return;
-    if (videos.length >= 1) {
-      setAlert({ type: 'error', message: 'Tối đa chỉ được đính kèm 1 video' });
+  const handleAddVideo = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    const isVideo = file.type.startsWith('video/');
+    if (!isVideo) {
+      setAlert({ type: 'error', message: 'Vui lòng chỉ chọn tệp video!' });
       return;
     }
-    setVideos((prev) => [...prev, url]);
+
+    const previewUrl = URL.createObjectURL(file);
+    const videoElement = document.createElement('video');
+    videoElement.src = previewUrl;
+    videoElement.onloadedmetadata = () => {
+      if (videoElement.duration > 60) {
+        setAlert({ type: 'error', message: 'Thời lượng video tối đa là 1 phút!' });
+        URL.revokeObjectURL(previewUrl);
+        return;
+      }
+
+      setReturnVideo(file);
+      setVideoPreview(previewUrl);
+    };
   };
 
-  const handleRemoveVideo = (index: number) => {
-    setVideos((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveVideo = () => {
+    if (videoPreview && videoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(videoPreview);
+    }
+    setReturnVideo(undefined);
+    setVideoPreview(undefined);
   };
 
   return {
@@ -99,14 +152,12 @@ export function useReturn(orderId: string) {
     setReason,
     selectedReason,
     setSelectedReason,
-    images,
-    setImages,
-    videos,
-    setVideos,
+    imagePreviews,
+    videoPreview,
     submitting,
     alert,
     handleSubmit,
-    handleAddImage,
+    handleAddImages,
     handleRemoveImage,
     handleAddVideo,
     handleRemoveVideo,

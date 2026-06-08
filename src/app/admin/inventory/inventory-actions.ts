@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getLowStockProductsAction(
   threshold?: number,
@@ -17,37 +17,19 @@ export async function getLowStockProductsAction(
   message?: string;
 }> {
   try {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
-    if (threshold !== undefined && threshold !== null) {
-      params.append('threshold', threshold.toString());
-    }
-    if (category) {
-      params.append('category', category);
-    }
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    if (threshold !== undefined && threshold !== null) params.append('threshold', threshold.toString());
+    if (category) params.append('category', category);
 
-    const response = await fetch(`${getApiUrl()}/inventory/low-stock?${params}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/low-stock?${params}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     });
 
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: 0,
-        products: [],
-        currentThreshold: 5,
-        message: data.message || 'Không thể tải danh sách tồn kho.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, products: [], currentThreshold: 5, message: data.message || 'Không thể tải danh sách tồn kho.' };
     }
-
     return {
       success: true,
       currentPage: data.pagination?.page || page,
@@ -58,15 +40,7 @@ export async function getLowStockProductsAction(
     };
   } catch (error) {
     console.error('getLowStockProductsAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: 0,
-      products: [],
-      currentThreshold: 5,
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, products: [], currentThreshold: 5, message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -83,33 +57,18 @@ export async function getOutOfStockProductsAction(
   message?: string;
 }> {
   try {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
-    if (category) {
-      params.append('category', category);
-    }
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    if (category) params.append('category', category);
 
-    const response = await fetch(`${getApiUrl()}/inventory/out-of-stock?${params}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/out-of-stock?${params}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     });
 
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: 0,
-        products: [],
-        message: data.message || 'Không thể tải danh sách sản phẩm hết hàng.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, products: [], message: data.message || 'Không thể tải danh sách sản phẩm hết hàng.' };
     }
-
     return {
       success: true,
       currentPage: data.pagination?.page || page,
@@ -119,14 +78,7 @@ export async function getOutOfStockProductsAction(
     };
   } catch (error) {
     console.error('getOutOfStockProductsAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: 0,
-      products: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, products: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -136,52 +88,34 @@ export async function getThresholdAction(): Promise<{
   message?: string;
 }> {
   try {
+    // API công khai
     const response = await fetch(`${getApiUrl()}/inventory/threshold`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        threshold: 5,
-        message: data.message || 'Không thể tải ngưỡng cảnh báo.',
-      };
+      return { success: false, threshold: 5, message: data.message || 'Không thể tải ngưỡng cảnh báo.' };
     }
-
-    return {
-      success: true,
-      threshold: data.data?.lowStockThreshold || 5,
-    };
+    return { success: true, threshold: data.data?.lowStockThreshold || 5 };
   } catch (error) {
     console.error('getThresholdAction error:', error);
-    return {
-      success: false,
-      threshold: 5,
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, threshold: 5, message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
 export async function updateThresholdAction(threshold: number): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/inventory/threshold`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/threshold`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify({ threshold }),
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Cập nhật ngưỡng thất bại.' };
     }
-
     return { success: true, message: 'Đã cập nhật ngưỡng cảnh báo tồn kho thành công!', data: data.data };
   } catch (error) {
     console.error('updateThresholdAction error:', error);
@@ -196,20 +130,15 @@ export async function updateProductStockAction(
   newStock: number,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/inventory/update-stock`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/update-stock`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify({ productId, variantIndex, branchId, newStock }),
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Cập nhật số lượng tồn kho thất bại.' };
     }
-
     return { success: true, message: 'Cập nhật tồn kho chi nhánh thành công!', data: data.data };
   } catch (error) {
     console.error('updateProductStockAction error:', error);
@@ -231,32 +160,18 @@ export async function getStockReceiptsAction(
   message?: string;
 }> {
   try {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
     if (branch) params.append('branch', branch);
     if (product) params.append('product', product);
 
-    const response = await fetch(`${getApiUrl()}/inventory/stock-receipts?${params}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/stock-receipts?${params}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: 0,
-        receipts: [],
-        message: data.message || 'Không thể tải lịch sử nhập kho.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, receipts: [], message: data.message || 'Không thể tải lịch sử nhập kho.' };
     }
-
     return {
       success: true,
       currentPage: data.pagination?.page || page,
@@ -266,14 +181,7 @@ export async function getStockReceiptsAction(
     };
   } catch (error) {
     console.error('getStockReceiptsAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: 0,
-      receipts: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, receipts: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -285,20 +193,15 @@ export async function createStockReceiptAction(
   notes?: string,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/inventory/stock-receipts`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/stock-receipts`, {
       method: 'POST',
-      headers,
       body: JSON.stringify({ productId, variantIndex, branchId, quantity, notes }),
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Tạo phiếu nhập kho thất bại.' };
     }
-
     return { success: true, message: 'Đã tạo phiếu nhập kho thành công!', data: data.data };
   } catch (error) {
     console.error('createStockReceiptAction error:', error);
@@ -308,19 +211,14 @@ export async function createStockReceiptAction(
 
 export async function cancelStockReceiptAction(receiptId: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/inventory/stock-receipts/${receiptId}/cancel`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/stock-receipts/${receiptId}/cancel`, {
       method: 'PUT',
-      headers,
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Hủy phiếu nhập kho thất bại.' };
     }
-
     return { success: true, message: 'Đã hủy phiếu nhập kho thành công!', data: data.data };
   } catch (error) {
     console.error('cancelStockReceiptAction error:', error);
@@ -334,33 +232,20 @@ export async function getBranchesAction(): Promise<{
   message?: string;
 }> {
   try {
+    // API công khai
     const response = await fetch(`${getApiUrl()}/branches`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        branches: [],
-        message: data.message || 'Không thể tải danh sách chi nhánh.',
-      };
+      return { success: false, branches: [], message: data.message || 'Không thể tải danh sách chi nhánh.' };
     }
-
-    return {
-      success: true,
-      branches: data.data || [],
-    };
+    return { success: true, branches: data.data || [] };
   } catch (error) {
     console.error('getBranchesAction error:', error);
-    return {
-      success: false,
-      branches: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, branches: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -427,35 +312,17 @@ export async function getProductsByBranchAction(
   message?: string;
 }> {
   try {
-    const params = new URLSearchParams({
-      branchId: branchId,
-      page: page.toString(),
-      limit: limit.toString(),
-      stockFilter: stockFilter,
-    });
-    if (category) {
-      params.append('category', category);
-    }
+    const params = new URLSearchParams({ branchId, page: page.toString(), limit: limit.toString(), stockFilter });
+    if (category) params.append('category', category);
 
-    const response = await fetch(`${getApiUrl()}/inventory/by-branch?${params}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/inventory/by-branch?${params}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: 0,
-        products: [],
-        message: data.message || 'Không thể tải danh sách sản phẩm chi nhánh.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, products: [], message: data.message || 'Không thể tải danh sách sản phẩm chi nhánh.' };
     }
-
     return {
       success: true,
       currentPage: data.pagination?.page || page,
@@ -465,14 +332,6 @@ export async function getProductsByBranchAction(
     };
   } catch (error) {
     console.error('getProductsByBranchAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: 0,
-      products: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalItems: 0, products: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
-

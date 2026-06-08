@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 // Lấy tất cả chi nhánh
 export async function getBranchesAction(): Promise<{
@@ -9,11 +9,9 @@ export async function getBranchesAction(): Promise<{
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/branches?all=true`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/branches?all=true`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     const data = await response.json();
     if (!response.ok) {
@@ -35,10 +33,8 @@ export async function createBranchAction(formData: {
   isActive?: boolean;
 }): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/branches`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/branches`, {
       method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
     });
     const data = await response.json();
@@ -61,10 +57,8 @@ export async function updateBranchAction(id: string, formData: {
   isActive?: boolean;
 }): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/branches/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/branches/${id}`, {
       method: 'PATCH',
-      headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
     });
     const data = await response.json();
@@ -81,10 +75,8 @@ export async function updateBranchAction(id: string, formData: {
 // Xóa chi nhánh
 export async function deleteBranchAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/branches/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/branches/${id}`, {
       method: 'DELETE',
-      headers,
     });
     const data = await response.json();
     if (!response.ok) {

@@ -45,6 +45,15 @@ export async function googleLoginAction(
       path: '/',
     });
 
+    if (data.refreshToken) {
+      cookieStore.set('refreshToken', data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 14, // 14 ngày
+        path: '/',
+      });
+    }
+
     return { success: true, error: null };
   } catch (error) {
     console.error('Google Login action error:', error);

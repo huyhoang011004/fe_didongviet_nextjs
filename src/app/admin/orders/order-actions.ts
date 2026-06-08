@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getOrdersAction(): Promise<{
   success: boolean;
@@ -8,11 +8,9 @@ export async function getOrdersAction(): Promise<{
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/orders`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/orders`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     const data = await response.json();
     if (!response.ok) {
@@ -27,10 +25,8 @@ export async function getOrdersAction(): Promise<{
 
 export async function updateOrderToDeliveredAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/orders/${id}/deliver`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/orders/${id}/deliver`, {
       method: 'PUT',
-      headers,
     });
     const data = await response.json();
     if (!response.ok) {
@@ -45,10 +41,8 @@ export async function updateOrderToDeliveredAction(id: string): Promise<Response
 
 export async function updateOrderStatusAction(id: string, status: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/orders/${id}/status`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/orders/${id}/status`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify({ status }),
     });
     const data = await response.json();
@@ -64,10 +58,8 @@ export async function updateOrderStatusAction(id: string, status: string): Promi
 
 export async function deleteOrderAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/orders/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/orders/${id}`, {
       method: 'DELETE',
-      headers,
     });
     const data = await response.json();
     if (!response.ok) {
@@ -89,7 +81,7 @@ export async function getBranchesAction(): Promise<{
     const response = await fetch(`${getApiUrl()}/branches`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     const data = await response.json();
     if (!response.ok) {

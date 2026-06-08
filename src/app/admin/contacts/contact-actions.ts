@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getContactsAction(
   status?: string,
@@ -16,7 +16,6 @@ export async function getContactsAction(
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
     const query = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -24,23 +23,15 @@ export async function getContactsAction(
       ...(subject ? { subject } : {}),
     });
 
-    const response = await fetch(`${getApiUrl()}/contacts/all?${query}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/contacts/all?${query}`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalContacts: 0,
-        contacts: [],
-        message: data.message || 'Không thể tải danh sách liên hệ.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalContacts: 0, contacts: [], message: data.message || 'Không thể tải danh sách liên hệ.' };
     }
 
     return {
@@ -52,14 +43,7 @@ export async function getContactsAction(
     };
   } catch (error) {
     console.error('getContactsAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalContacts: 0,
-      contacts: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalContacts: 0, contacts: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -68,10 +52,8 @@ export async function updateContactStatusAction(
   statusData: { status?: string; notes?: string },
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/contacts/update/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/contacts/update/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(statusData),
     });
 
@@ -90,10 +72,8 @@ export async function updateContactStatusAction(
 
 export async function softDeleteContactAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/contacts/soft-delete/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/contacts/soft-delete/${id}`, {
       method: 'PATCH',
-      headers,
     });
 
     const data = await response.json();
@@ -111,10 +91,8 @@ export async function softDeleteContactAction(id: string): Promise<ResponseState
 
 export async function deleteContactAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/contacts/delete/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/contacts/delete/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     const data = await response.json();

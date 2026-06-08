@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { fetchWithAuth } from '@/shared/lib/api';
 import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
@@ -10,19 +10,9 @@ export async function DELETE(
 ) {
   try {
     const { productId, variantId } = await params;
-    const cookieStore = await cookies();
-    const token = cookieStore.get('session_token')?.value;
 
-    if (!token) {
-      return NextResponse.json({ success: false, message: 'Chưa đăng nhập.' }, { status: 401 });
-    }
-
-    const res = await fetch(`${API_URL}/cart/${productId}/${variantId}`, {
+    const res = await fetchWithAuth(`${API_URL}/cart/${productId}/${variantId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

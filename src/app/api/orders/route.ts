@@ -1,29 +1,13 @@
-import { cookies } from 'next/headers';
+import { fetchWithAuth } from '@/shared/lib/api';
 import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
-async function getAuthHeaders() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('session_token')?.value;
-  if (!token) return null;
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const headers = await getAuthHeaders();
-    if (!headers) {
-      return NextResponse.json({ success: false, message: 'Chưa đăng nhập.' }, { status: 401 });
-    }
-
     const body = await request.json();
-    const res = await fetch(`${API_URL}/orders`, {
+    const res = await fetchWithAuth(`${API_URL}/orders`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -36,14 +20,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const headers = await getAuthHeaders();
-    if (!headers) {
-      return NextResponse.json({ success: false, message: 'Chưa đăng nhập.' }, { status: 401 });
-    }
-
-    const res = await fetch(`${API_URL}/orders/myorders`, {
+    const res = await fetchWithAuth(`${API_URL}/orders/myorders`, {
       method: 'GET',
-      headers,
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

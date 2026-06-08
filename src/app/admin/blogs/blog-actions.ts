@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getBlogsAction(
   category?: string,
@@ -16,7 +16,6 @@ export async function getBlogsAction(
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
     const query = new URLSearchParams({
       showAll: 'true',
       page: page.toString(),
@@ -25,23 +24,15 @@ export async function getBlogsAction(
       ...(keyword ? { keyword } : {}),
     });
 
-    const response = await fetch(`${getApiUrl()}/blogs?${query}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/blogs?${query}`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalBlogs: 0,
-        blogs: [],
-        message: data.message || 'Không thể tải danh sách bài viết.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalBlogs: 0, blogs: [], message: data.message || 'Không thể tải danh sách bài viết.' };
     }
 
     return {
@@ -53,14 +44,7 @@ export async function getBlogsAction(
     };
   } catch (error) {
     console.error('getBlogsAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalBlogs: 0,
-      blogs: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalBlogs: 0, blogs: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -76,10 +60,8 @@ export async function createBlogAction(blogData: {
   metaDescription?: string;
 }): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/blogs`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/blogs`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(blogData),
     });
 
@@ -101,10 +83,8 @@ export async function updateBlogAction(
   blogData: Record<string, any>,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/blogs/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/blogs/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(blogData),
     });
 
@@ -123,10 +103,8 @@ export async function updateBlogAction(
 
 export async function toggleBlogStatusAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/blogs/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/blogs/${id}`, {
       method: 'PATCH',
-      headers,
     });
 
     const data = await response.json();
@@ -144,10 +122,8 @@ export async function toggleBlogStatusAction(id: string): Promise<ResponseState>
 
 export async function deleteBlogAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/blogs/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/blogs/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     const data = await response.json();

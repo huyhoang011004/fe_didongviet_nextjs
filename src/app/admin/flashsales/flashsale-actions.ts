@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getFlashSalesAction(
   page: number = 1,
@@ -14,22 +14,13 @@ export async function getFlashSalesAction(
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/flash-sales/admin/all?page=${page}&limit=${limit}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/flash-sales/admin/all?page=${page}&limit=${limit}`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     const data = await response.json();
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalCount: 0,
-        data: [],
-        message: data.message || 'Không thể tải danh sách Flash Sale.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalCount: 0, data: [], message: data.message || 'Không thể tải danh sách Flash Sale.' };
     }
     return {
       success: true,
@@ -40,14 +31,7 @@ export async function getFlashSalesAction(
     };
   } catch (error) {
     console.error('getFlashSalesAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalCount: 0,
-      data: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalCount: 0, data: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -57,11 +41,9 @@ export async function getFlashSaleByIdAction(id: string): Promise<{
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/flash-sales/admin/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/flash-sales/admin/${id}`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     const data = await response.json();
     if (!response.ok) {
@@ -89,10 +71,8 @@ export async function createFlashSaleAction(flashSaleData: {
   isActive?: boolean;
 }): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/flash-sales/admin`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/flash-sales/admin`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(flashSaleData),
     });
     const data = await response.json();
@@ -124,10 +104,8 @@ export async function updateFlashSaleAction(
   },
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/flash-sales/admin/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/flash-sales/admin/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(flashSaleData),
     });
     const data = await response.json();
@@ -143,10 +121,8 @@ export async function updateFlashSaleAction(
 
 export async function deleteFlashSaleAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/flash-sales/admin/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/flash-sales/admin/${id}`, {
       method: 'DELETE',
-      headers,
     });
     const data = await response.json();
     if (!response.ok) {
@@ -161,10 +137,8 @@ export async function deleteFlashSaleAction(id: string): Promise<ResponseState> 
 
 export async function toggleFlashSaleStatusAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/flash-sales/admin/${id}/status`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/flash-sales/admin/${id}/status`, {
       method: 'PATCH',
-      headers,
     });
     const data = await response.json();
     if (!response.ok) {

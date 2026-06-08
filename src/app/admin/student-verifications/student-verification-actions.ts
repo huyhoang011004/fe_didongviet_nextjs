@@ -1,6 +1,7 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl } from '../admin-utils';
+// Thay đổi import: bỏ getAuthHeaders, thêm fetchWithAdminAuth
+import { fetchWithAdminAuth, getApiUrl } from '../admin-utils';
 
 export async function getPendingHSSVAction(): Promise<{
   success: boolean;
@@ -8,12 +9,11 @@ export async function getPendingHSSVAction(): Promise<{
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(
+    // Sử dụng fetchWithAdminAuth thay thế cho fetch thông thường
+    const response = await fetchWithAdminAuth(
       `${getApiUrl()}/student-profile/management/pending`,
       {
         method: 'GET',
-        headers,
         next: { revalidate: 0 },
       },
     );
@@ -50,12 +50,11 @@ export async function verifyHSSVStatusAction(
   instruction?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(
+    // Sử dụng fetchWithAdminAuth thay thế cho fetch thông thường
+    const response = await fetchWithAdminAuth(
       `${getApiUrl()}/student-profile/management/verify/${id}`,
       {
         method: 'PUT',
-        headers,
         body: JSON.stringify(bodyData),
       },
     );

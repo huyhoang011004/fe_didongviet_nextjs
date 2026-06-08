@@ -57,6 +57,15 @@ export async function loginAction(
       path: '/',
     });
 
+    if (data.refreshToken) {
+      cookieStore.set('refreshToken', data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 14, // 14 ngày
+        path: '/',
+      });
+    }
+
     return { success: true, error: null };
   } catch (err) {
     console.error('Login action error:', err);

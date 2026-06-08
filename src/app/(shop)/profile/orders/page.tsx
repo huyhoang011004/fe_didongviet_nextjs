@@ -32,6 +32,7 @@ export default function ProfileOrdersPage() {
     handleConfirmReceipt,
     getFilteredOrders,
     fetchOrders,
+    reviewedOrderIds,
   } = useOrders();
 
   const tabs = [
@@ -193,6 +194,7 @@ export default function ProfileOrdersPage() {
               onCancelClick={setCancelConfirmId}
               onReceiveClick={setReceiveConfirmId}
               submittingId={submittingId}
+              isReviewed={reviewedOrderIds.has(order._id)}
             />
           ))}
         </div>

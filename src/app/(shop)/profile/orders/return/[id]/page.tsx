@@ -16,15 +16,15 @@ export default function ReturnOrderPage() {
     setReason,
     selectedReason,
     setSelectedReason,
-    images,
+    imagePreviews,
+    videoPreview,
     submitting,
     alert,
     handleSubmit,
-    handleAddImage,
+    handleAddImages,
     handleRemoveImage,
-    videos,
-    handleAddVideo,
     handleRemoveVideo,
+    handleAddVideo,
   } = useReturn(id);
 
   if (loading) {
@@ -102,10 +102,10 @@ export default function ReturnOrderPage() {
         setReason={setReason}
         selectedReason={selectedReason}
         setSelectedReason={setSelectedReason}
-        images={images}
-        handleAddImage={handleAddImage}
+        imagePreviews={imagePreviews}
+        handleAddImages={handleAddImages}
         handleRemoveImage={handleRemoveImage}
-        videos={videos}
+        videoPreview={videoPreview}
         handleAddVideo={handleAddVideo}
         handleRemoveVideo={handleRemoveVideo}
         submitting={submitting}

@@ -11,6 +11,7 @@ interface OrderCardProps {
   onCancelClick: (orderId: string) => void;
   onReceiveClick: (orderId: string) => void;
   submittingId: string | null;
+  isReviewed: boolean;
 }
 
 export default function OrderCard({
@@ -21,6 +22,7 @@ export default function OrderCard({
   onCancelClick,
   onReceiveClick,
   submittingId,
+  isReviewed,
 }: OrderCardProps) {
   const isPaid = order.isPaid || (order.paymentMethod === 'COD' && order.orderStatus === 'Đã giao');
   
@@ -138,7 +140,7 @@ export default function OrderCard({
               asChild
               className='bg-blue-600 hover:bg-blue-700 text-white h-8 text-[10px] px-3 font-bold rounded-lg cursor-pointer transition-colors shadow-xs border-none'
             >
-              <Link href={`/profile/orders/review/${order._id}`}>Đánh giá</Link>
+              <Link href={`/profile/orders/review/${order._id}`}>{isReviewed ? 'Sửa đánh giá' : 'Đánh giá'}</Link>
             </Button>
           )}
         </div>

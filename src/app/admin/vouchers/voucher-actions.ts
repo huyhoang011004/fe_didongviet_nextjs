@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getVouchersAction(): Promise<{
   success: boolean;
@@ -8,11 +8,9 @@ export async function getVouchersAction(): Promise<{
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/vouchers/admin`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/vouchers/admin`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     const data = await response.json();
     if (!response.ok) {
@@ -39,10 +37,8 @@ export async function createVoucherAction(voucherData: {
   isHSSVOnly?: boolean;
 }): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/vouchers`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/vouchers`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(voucherData),
     });
     const data = await response.json();
@@ -61,10 +57,8 @@ export async function updateVoucherAction(
   voucherData: Record<string, any>,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/vouchers/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/vouchers/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(voucherData),
     });
     const data = await response.json();
@@ -80,10 +74,8 @@ export async function updateVoucherAction(
 
 export async function deleteVoucherAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/vouchers/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/vouchers/${id}`, {
       method: 'DELETE',
-      headers,
     });
     const data = await response.json();
     if (!response.ok) {
@@ -102,11 +94,9 @@ export async function getVoucherByCodeAction(code: string): Promise<{
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/vouchers/${code}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/vouchers/${code}`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     const data = await response.json();
     if (!response.ok) {

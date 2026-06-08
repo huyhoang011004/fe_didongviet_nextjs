@@ -5,8 +5,9 @@ export async function POST() {
   try {
     const cookieStore = await cookies();
     
-    // Xóa cookie bằng cách set maxAge = 0
+    // Xóa cookie
     cookieStore.delete('session_token');
+    cookieStore.delete('refreshToken');
 
     return NextResponse.json({
       success: true,

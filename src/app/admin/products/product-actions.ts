@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getProductsAction(
   page: number = 1,
@@ -16,11 +16,7 @@ export async function getProductsAction(
   message?: string;
 }> {
   try {
-    const queryParams: Record<string, string> = {
-      page: page.toString(),
-      limit: limit.toString(),
-      search,
-    };
+    const queryParams: Record<string, string> = { page: page.toString(), limit: limit.toString(), search };
     if (branchId) queryParams.branchId = branchId;
     const query = new URLSearchParams(queryParams);
 
@@ -31,18 +27,9 @@ export async function getProductsAction(
     });
 
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalProducts: 0,
-        products: [],
-        message: data.message || 'Không thể tải danh sách sản phẩm.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalProducts: 0, products: [], message: data.message || 'Không thể tải danh sách sản phẩm.' };
     }
-
     return {
       success: true,
       currentPage: data.currentPage || page,
@@ -52,14 +39,7 @@ export async function getProductsAction(
     };
   } catch (error) {
     console.error('getProductsAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalProducts: 0,
-      products: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalProducts: 0, products: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
@@ -76,10 +56,7 @@ export async function getProductsByCategoryAction(
   message?: string;
 }> {
   try {
-    const query = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
 
     const response = await fetch(`${getApiUrl()}/products/category/${categorySlug}?${query}`, {
       method: 'GET',
@@ -88,18 +65,9 @@ export async function getProductsByCategoryAction(
     });
 
     const data = await response.json();
-
     if (!response.ok) {
-      return {
-        success: false,
-        currentPage: 1,
-        totalPages: 1,
-        totalProducts: 0,
-        products: [],
-        message: data.message || 'Không thể tải danh sách sản phẩm theo danh mục.',
-      };
+      return { success: false, currentPage: 1, totalPages: 1, totalProducts: 0, products: [], message: data.message || 'Không thể tải danh sách sản phẩm theo danh mục.' };
     }
-
     return {
       success: true,
       currentPage: data.currentPage || page,
@@ -109,32 +77,20 @@ export async function getProductsByCategoryAction(
     };
   } catch (error) {
     console.error('getProductsByCategoryAction error:', error);
-    return {
-      success: false,
-      currentPage: 1,
-      totalPages: 1,
-      totalProducts: 0,
-      products: [],
-      message: 'Mất kết nối tới hệ thống.',
-    };
+    return { success: false, currentPage: 1, totalPages: 1, totalProducts: 0, products: [], message: 'Mất kết nối tới hệ thống.' };
   }
 }
 
 export async function softDeleteProductAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/products/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products/${id}`, {
       method: 'PATCH',
-      headers,
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Thay đổi trạng thái sản phẩm thất bại.' };
     }
-
     return { success: true, message: data.message || 'Đã thay đổi trạng thái sản phẩm thành công!' };
   } catch (error) {
     console.error('softDeleteProductAction error:', error);
@@ -144,19 +100,14 @@ export async function softDeleteProductAction(id: string): Promise<ResponseState
 
 export async function hardDeleteProductAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/products/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products/${id}`, {
       method: 'DELETE',
-      headers,
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Xóa vĩnh viễn sản phẩm thất bại.' };
     }
-
     return { success: true, message: data.message || 'Đã xóa vĩnh viễn sản phẩm khỏi kho hàng thành công!' };
   } catch (error) {
     console.error('hardDeleteProductAction error:', error);
@@ -166,23 +117,15 @@ export async function hardDeleteProductAction(id: string): Promise<ResponseState
 
 export async function createProductAction(formData: FormData): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const authHeaders: Record<string, string> = { ...headers };
-    delete authHeaders['Content-Type'];
-
-    const response = await fetch(`${getApiUrl()}/products`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products`, {
       method: 'POST',
-      headers: authHeaders,
       body: formData,
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Tạo sản phẩm thất bại.' };
     }
-
     return { success: true, message: 'Đã tạo sản phẩm thành công!', data: data.data };
   } catch (error) {
     console.error('createProductAction error:', error);
@@ -195,23 +138,15 @@ export async function updateProductAction(
   formData: FormData,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const authHeaders: Record<string, string> = { ...headers };
-    delete authHeaders['Content-Type'];
-
-    const response = await fetch(`${getApiUrl()}/products/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products/${id}`, {
       method: 'PUT',
-      headers: authHeaders,
       body: formData,
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Cập nhật sản phẩm thất bại.' };
     }
-
     return { success: true, message: 'Đã cập nhật sản phẩm thành công!', data: data.data };
   } catch (error) {
     console.error('updateProductAction error:', error);
@@ -225,23 +160,15 @@ export async function replaceProductImageAction(
   formData: FormData,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const authHeaders: Record<string, string> = { ...headers };
-    delete authHeaders['Content-Type'];
-
-    const response = await fetch(`${getApiUrl()}/products/${productId}/images/${imageId}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products/${productId}/images/${imageId}`, {
       method: 'PUT',
-      headers: authHeaders,
       body: formData,
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Thay thế ảnh thất bại.' };
     }
-
     return { success: true, message: 'Thay thế ảnh thành công!', data: data };
   } catch (error) {
     console.error('replaceProductImageAction error:', error);
@@ -254,19 +181,14 @@ export async function deleteProductImageAction(
   imageId: string,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/products/${productId}/images/${imageId}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products/${productId}/images/${imageId}`, {
       method: 'DELETE',
-      headers,
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Xóa ảnh thất bại.' };
     }
-
     return { success: true, message: 'Xóa ảnh thành công!', data: data };
   } catch (error) {
     console.error('deleteProductImageAction error:', error);
@@ -279,20 +201,15 @@ export async function reorderProductImagesAction(
   orders: Array<{ imageId: string; order: number }>,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/products/${productId}/images/reorder`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products/${productId}/images/reorder`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(orders),
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Sắp xếp thứ tự ảnh thất bại.' };
     }
-
     return { success: true, message: 'Sắp xếp thứ tự ảnh thành công!', data: data };
   } catch (error) {
     console.error('reorderProductImagesAction error:', error);
@@ -305,20 +222,15 @@ export async function setProductThumbnailAction(
   imageId: string,
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/products/${productId}/images/${imageId}/thumbnail`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/products/${productId}/images/${imageId}/thumbnail`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify({ imageId }),
       cache: 'no-store',
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       return { success: false, message: data.message || 'Đặt ảnh đại diện thất bại.' };
     }
-
     return { success: true, message: 'Đặt ảnh đại diện thành công!', data: data };
   } catch (error) {
     console.error('setProductThumbnailAction error:', error);

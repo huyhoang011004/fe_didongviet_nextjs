@@ -1,6 +1,6 @@
 'use server';
 
-import { getAuthHeaders, getApiUrl, ResponseState } from '../admin-utils';
+import { fetchWithAdminAuth, getApiUrl, ResponseState } from '../admin-utils';
 
 export async function getUsersAction(
   status: string = 'all',
@@ -15,7 +15,6 @@ export async function getUsersAction(
   message?: string;
 }> {
   try {
-    const headers = await getAuthHeaders();
     const query = new URLSearchParams({
       status,
       page: page.toString(),
@@ -23,10 +22,9 @@ export async function getUsersAction(
       search,
     });
 
-    const response = await fetch(`${getApiUrl()}/accounts/admin/get-all-users?${query}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/accounts/admin/get-all-users?${query}`, {
       method: 'GET',
-      headers,
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -77,10 +75,8 @@ export async function createUserByAdminAction(
   }
 
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/accounts/admin/create`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/accounts/admin/create`, {
       method: 'POST',
-      headers,
       body: JSON.stringify({ name, email, password, phone, role }),
     });
 
@@ -109,10 +105,8 @@ export async function updateUserByAdminAction(
   },
 ): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/accounts/admin/update/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/accounts/admin/update/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(userData),
     });
 
@@ -131,10 +125,8 @@ export async function updateUserByAdminAction(
 
 export async function softDeleteUserAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/accounts/admin/soft-delete/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/accounts/admin/soft-delete/${id}`, {
       method: 'PATCH',
-      headers,
     });
 
     const data = await response.json();
@@ -152,10 +144,8 @@ export async function softDeleteUserAction(id: string): Promise<ResponseState> {
 
 export async function hardDeleteUserAction(id: string): Promise<ResponseState> {
   try {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiUrl()}/accounts/admin/delete/${id}`, {
+    const response = await fetchWithAdminAuth(`${getApiUrl()}/accounts/admin/delete/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     const data = await response.json();
