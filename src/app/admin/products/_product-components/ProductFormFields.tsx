@@ -677,6 +677,7 @@ export function ProductFormFields({
                   color: '',
                   ram: '',
                   rom: '',
+                  importPrice: '',
                   price: '',
                   salePrice: '',
                   sku: '',
@@ -832,6 +833,33 @@ export function ProductFormFields({
                         defaultValue={v.sku}
                         required
                         className='h-8 text-xs font-mono'
+                      />
+                    </div>
+                    <div>
+                      <span className='text-[10px] text-slate-400 block uppercase font-bold'>
+                        Giá nhập
+                      </span>
+                      <Input
+                        type='text'
+                        value={formatNumber(v.importPrice)}
+                        onChange={(e) =>
+                          setVariants(
+                            variants.map((item, i) =>
+                              i === idx
+                                ? {
+                                  ...item,
+                                  importPrice: e.target.value.replace(/\D/g, ''),
+                                }
+                                : item,
+                            ),
+                          )
+                        }
+                        className='h-8 text-xs font-bold text-slate-600'
+                      />
+                      <input
+                        type='hidden'
+                        name={`variant_${idx}_importPrice`}
+                        value={v.importPrice || ''}
                       />
                     </div>
                     <div>

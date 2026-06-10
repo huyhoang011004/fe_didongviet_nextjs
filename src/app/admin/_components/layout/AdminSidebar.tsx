@@ -73,6 +73,13 @@ export function AdminSidebar({
         },
       ],
     },
+    // {
+    //   groupLabel: 'Bảng điều khiển',
+    //   icon: Briefcase,
+    //   items: [
+    //     { title: 'Tổng quan', href: '/admin', icon: BarChart3 },
+    //   ],
+    // },
     {
       groupLabel: 'Quản lý Nghiệp vụ',
       icon: Briefcase,
@@ -151,7 +158,7 @@ export function AdminSidebar({
   ];
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    'Báo cáo & Thống kê': true,
+    'Tổng quan': true,
     'Quản lý Nghiệp vụ': true,
     'Chiến dịch & Marketing': true,
     'Nội dung & Khách hàng': true,
@@ -242,21 +249,19 @@ export function AdminSidebar({
                   {/* TIÊU ĐỀ NHÓM: Trên mobile tăng khoảng cách bấm (py-2.5) */}
                   <button
                     onClick={() => toggleGroup(group.groupLabel)}
-                    className={`w-full flex items-center text-[11px] font-bold uppercase tracking-wider transition-all bg-transparent border-none cursor-pointer group/title mb-2 py-2.5 lg:py-1.5 ${
-                      sidebarCollapsed
-                        ? 'lg:px-0 lg:justify-center lg:gap-0'
-                        : 'px-3 justify-between gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                    }`}
+                    className={`w-full flex items-center text-[11px] font-bold uppercase tracking-wider transition-all bg-transparent border-none cursor-pointer group/title mb-2 py-2.5 lg:py-1.5 ${sidebarCollapsed
+                      ? 'lg:px-0 lg:justify-center lg:gap-0'
+                      : 'px-3 justify-between gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                      }`}
                     title={group.groupLabel}
                   >
                     <div className='flex items-center gap-2.5 overflow-hidden whitespace-nowrap text-ellipsis'>
                       <GroupIcon
                         size={sidebarCollapsed ? 22 : 16}
-                        className={`flex-shrink-0 transition-all ${
-                          sidebarCollapsed
-                            ? 'text-slate-600 dark:text-slate-300 lg:bg-slate-100 lg:dark:bg-slate-800 lg:p-1 lg:rounded-xl'
-                            : 'text-slate-500 dark:text-slate-400'
-                        }`}
+                        className={`flex-shrink-0 transition-all ${sidebarCollapsed
+                          ? 'text-slate-600 dark:text-slate-300 lg:bg-slate-100 lg:dark:bg-slate-800 lg:p-1 lg:rounded-xl'
+                          : 'text-slate-500 dark:text-slate-400'
+                          }`}
                       />
                       <span
                         className={`${sidebarCollapsed ? 'lg:hidden' : 'block text-slate-500 dark:text-slate-400'}`}
@@ -274,11 +279,10 @@ export function AdminSidebar({
 
                   {/* DANH SÁCH MENU CON */}
                   <div
-                    className={`space-y-1 transition-all duration-300 overflow-hidden ${
-                      isGroupOpen
-                        ? 'max-h-[600px] opacity-100 visible'
-                        : 'max-h-0 opacity-0 invisible pointer-events-none'
-                    }`}
+                    className={`space-y-1 transition-all duration-300 overflow-hidden ${isGroupOpen
+                      ? 'max-h-[600px] opacity-100 visible'
+                      : 'max-h-0 opacity-0 invisible pointer-events-none'
+                      }`}
                   >
                     {visibleItems.map((item) => {
                       const Icon = item.icon;
@@ -289,15 +293,13 @@ export function AdminSidebar({
                           key={item.href}
                           href={item.href}
                           onClick={() => setSidebarOpen(false)} // TỰ ĐỘNG ĐÓNG MENU TRÊN MOBILE KHI BẤM LINK
-                          className={`flex items-center gap-3 rounded-xl font-medium text-sm transition-all group py-3 px-4 lg:py-2.5 ${
-                            sidebarCollapsed
-                              ? 'lg:px-2.5 lg:justify-center'
-                              : 'lg:pl-7 lg:pr-3'
-                          } ${
-                            isActive
+                          className={`flex items-center gap-3 rounded-xl font-medium text-sm transition-all group py-3 px-4 lg:py-2.5 ${sidebarCollapsed
+                            ? 'lg:px-2.5 lg:justify-center'
+                            : 'lg:pl-7 lg:pr-3'
+                            } ${isActive
                               ? 'bg-red-50 dark:bg-red-950/30 text-didongviet-red'
                               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-didongviet-red'
-                          }`}
+                            }`}
                         >
                           <Icon
                             size={18}

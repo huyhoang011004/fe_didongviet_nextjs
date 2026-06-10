@@ -262,6 +262,9 @@ export function useProduct() {
       const romInput = form.querySelector(
         `[name="variant_${idx}_rom"]`,
       ) as HTMLInputElement;
+      const importPriceInput = form.querySelector(
+        `[name="variant_${idx}_importPrice"]`,
+      ) as HTMLInputElement;
       const priceInput = form.querySelector(
         `[name="variant_${idx}_price"]`,
       ) as HTMLInputElement;
@@ -279,6 +282,9 @@ export function useProduct() {
         color: colorInput ? colorInput.value : v.color,
         ram: ramInput ? ramInput.value : v.ram,
         rom: romInput ? romInput.value : v.rom,
+        importPrice: importPriceInput
+          ? parseFloat(importPriceInput.value) || 0
+          : v.importPrice || 0,
         price: priceInput ? parseFloat(priceInput.value) || 0 : v.price,
         salePrice:
           salePriceInput && salePriceInput.value
@@ -344,6 +350,9 @@ export function useProduct() {
         };
       });
 
+      const importPriceInput = form.querySelector(
+        `[name="variant_${idx}_importPrice"]`,
+      ) as HTMLInputElement;
       const colorInput = form.querySelector(
         `[name="variant_${idx}_color"]`,
       ) as HTMLInputElement;
@@ -370,6 +379,9 @@ export function useProduct() {
         color: colorInput ? colorInput.value : v.color,
         ram: ramInput ? ramInput.value : v.ram,
         rom: romInput ? romInput.value : v.rom,
+        importPrice: importPriceInput
+          ? parseFloat(importPriceInput.value) || 0
+          : v.importPrice || 0,
         price: priceInput ? parseFloat(priceInput.value) || 0 : v.price,
         salePrice:
           salePriceInput && salePriceInput.value
