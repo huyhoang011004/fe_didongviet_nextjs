@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { StudentProfile } from '@/types/student';
+import { resolveImageUrl } from '@/shared/lib/utils';
 
 interface StudentVerificationDetailsModalProps {
   isOpen: boolean;
@@ -137,7 +138,7 @@ export function StudentVerificationDetailsModal({
             <div className='bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 flex items-center justify-center p-2 max-h-[300px]'>
               {selectedProfile.studentCardImage ? (
                 <img
-                  src={selectedProfile.studentCardImage}
+                  src={resolveImageUrl(selectedProfile.studentCardImage)}
                   alt='Minh chứng thẻ sinh viên'
                   className='max-h-[280px] w-auto object-contain rounded-lg shadow-xs'
                   onError={(e) => {

@@ -9,6 +9,8 @@ import {
   ShieldCheck,
   ChevronRight,
   Ticket,
+  Truck,
+  RotateCcw,
 } from 'lucide-react';
 import { useCartStore } from '@/app/(shop)/cart/useCartStore';
 import VoucherList from '../cart/_components/VoucherList';
@@ -18,6 +20,7 @@ import {
   calcVoucherValue,
   applyVoucherServer,
 } from '../cart/cart-actions';
+import { createMoMoPayment, createVNPayPayment, calculateShippingFee } from './checkout-actions';
 import { VIETNAM_PROVINCES, getBranchRegion } from './_components/checkout-utils';
 import AddressModal from './_components/AddressModal';
 
@@ -56,8 +59,8 @@ function CheckoutContent() {
   const cartItems = buyNow
     ? (buyNowItem ? [buyNowItem] : [])
     : allCartItems.filter((item) =>
-        selected.includes(`${item.product}|${item.variant}`)
-      );
+      selected.includes(`${item.product}|${item.variant}`)
+    );
 
   const selectedTotalPrice = cartItems.reduce(
     (total, item) => total + (item.salePrice || item.price) * item.quantity,
@@ -98,6 +101,8 @@ function CheckoutContent() {
 
   const [submitting, setSubmitting] = useState(false);
   const [isOrderCompleted, setIsOrderCompleted] = useState(false);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [estimatedDelivery, setEstimatedDelivery] = useState('');
   const [alert, setAlert] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -290,26 +295,127 @@ function CheckoutContent() {
   // Tìm chi nhánh hiện tại đang chọn
   const selectedBranch = branches.find((b) => b._id === selectedBranchId);
 
-  // Tính phí vận chuyển tự động
-  const getShippingPrice = () => {
-    if (selectedTotalPrice > 2000000) return 0; // Đơn trên 2 triệu miễn phí ship
-    if (!province || !selectedBranch) return 30000;
+  // Tính phí vận chuyển tự động qua GHN API
+  const [shippingPrice, setShippingPrice] = useState(30000);
+  const [recipientDistrictId, setRecipientDistrictId] = useState<number | undefined>(undefined);
+  const [recipientWardCode, setRecipientWardCode] = useState<string | undefined>(undefined);
 
-    const recipient = VIETNAM_PROVINCES.find((p) => p.name === province);
-    const branchInfo = getBranchRegion(selectedBranch.address);
-
-    if (!recipient) return 30000;
-
-    if (recipient.name === branchInfo.province) {
-      return 30000; // Cùng tỉnh thành
+  // Lookup GHN district_id khi province/district thay đổi
+  useEffect(() => {
+    if (!province || !district) {
+      setRecipientDistrictId(undefined);
+      return;
     }
-    if (recipient.region === branchInfo.region) {
-      return 40000; // Cùng miền
-    }
-    return 60000; // Khác miền
-  };
+    let cancelled = false;
+    async function lookupDistrict() {
+      try {
+        // Lấy danh sách tỉnh để tìm province_id
+        const provRes = await fetch(`${API_URL}/ghn/provinces`).then(r => r.json());
+        if (!provRes.success || !provRes.data) return;
+        const matchedProv = provRes.data.find((p: any) =>
+          p.provinceName === province || province.includes(p.provinceName)
+        );
+        if (!matchedProv) return;
 
-  const shippingPrice = getShippingPrice();
+        // Lấy danh sách quận/huyện
+        const distRes = await fetch(`${API_URL}/ghn/districts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provinceId: matchedProv.provinceId }),
+        }).then(r => r.json());
+        if (!distRes.success || !distRes.data) return;
+
+        const matchedDist = distRes.data.find((d: any) =>
+          d.districtName === district || district.includes(d.districtName)
+        );
+        if (!cancelled && matchedDist) {
+          setRecipientDistrictId(matchedDist.districtId as number);
+        }
+      } catch { /* ignore */ }
+    }
+    lookupDistrict();
+    return () => { cancelled = true; };
+  }, [province, district]);
+
+  // Lookup GHN ward_code khi districtId/ward thay đổi
+  useEffect(() => {
+    if (!recipientDistrictId || !ward) {
+      setRecipientWardCode(undefined);
+      return;
+    }
+    let cancelled = false;
+    async function lookupWard() {
+      try {
+        const wardRes = await fetch(`${API_URL}/ghn/wards`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ districtId: recipientDistrictId }),
+        }).then(r => r.json());
+        if (!wardRes.success || !wardRes.data) return;
+
+        const matchedWard = wardRes.data.find((w: any) =>
+          w.wardName === ward || ward.includes(w.wardName)
+        );
+        if (!cancelled && matchedWard) {
+          setRecipientWardCode(matchedWard.wardCode as string);
+        }
+      } catch { /* ignore */ }
+    }
+    lookupWard();
+    return () => { cancelled = true; };
+  }, [recipientDistrictId, ward]);
+
+  // Tính phí vận chuyển GHN
+  useEffect(() => {
+    // Đơn trên 2 triệu → miễn phí ship
+    if (selectedTotalPrice > 2000000) {
+      setShippingPrice(0);
+      setEstimatedDelivery('');
+      return;
+    }
+
+    // Chưa đủ thông tin → phí mặc định
+    if (!selectedBranch || !recipientDistrictId || !recipientWardCode) {
+      if (selectedBranch && !selectedBranch.ghnDistrictId) {
+        // Fallback logic cũ
+        const recipient = VIETNAM_PROVINCES.find((p) => p.name === province);
+        const branchInfo = getBranchRegion(selectedBranch.address);
+        if (recipient?.name === branchInfo.province) setShippingPrice(30000);
+        else if (recipient?.region === branchInfo.region) setShippingPrice(40000);
+        else setShippingPrice(60000);
+      }
+      return;
+    }
+
+    if (!selectedBranch.ghnDistrictId || selectedBranch.ghnDistrictId === 0) return;
+
+    let cancelled = false;
+    async function fetchGHNFee() {
+      setShippingLoading(true);
+      try {
+        const result = await calculateShippingFee({
+          fromDistrictId: selectedBranch.ghnDistrictId,
+          toDistrictId: recipientDistrictId,
+          toWardCode: recipientWardCode,
+          weight: cartItems.reduce((sum, item) => sum + item.quantity * 500, 0),
+          insuredValue: selectedTotalPrice,
+        });
+        if (!cancelled && result?.success && result.data) {
+          setShippingPrice(result.data.fee || 30000);
+          if (result.data.estimatedDeliveryTime) {
+            const date = new Date(result.data.estimatedDeliveryTime);
+            setEstimatedDelivery(date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }));
+          }
+        }
+      } catch {
+        if (!cancelled) setShippingPrice(30000);
+      } finally {
+        if (!cancelled) setShippingLoading(false);
+      }
+    }
+    fetchGHNFee();
+    return () => { cancelled = true; };
+  }, [selectedBranchId, recipientDistrictId, recipientWardCode, selectedTotalPrice, cartItems.length]);
   const grandTotal = Math.max(0, selectedTotalPrice + shippingPrice - discountAmount);
 
   // Hàm áp dụng voucher thủ công
@@ -435,7 +541,6 @@ function CheckoutContent() {
         qty: item.quantity,
       }));
 
-      // Đẩy voucher giảm giá vào discountDMember để backend trừ tiền hợp lệ
       const payload = {
         orderItems,
         shippingAddress: {
@@ -447,10 +552,12 @@ function CheckoutContent() {
           streetAddress,
         },
         paymentMethod,
-        discountDMember: discountAmount,
+        discountDMember: 0,
         tradeInBonus: 0,
         shippingPrice,
         branchId: selectedBranchId,
+        appliedVoucher: appliedVoucher?.code || null,
+        discountVoucher: discountAmount || 0,
       };
 
       const res = await fetch('/api/orders', {
@@ -461,16 +568,71 @@ function CheckoutContent() {
 
       const data = await res.json();
       if (data.success) {
-        setIsOrderCompleted(true);
+        const orderId = data.data?._id || data.order?._id || data._id || '';
 
-        // Xóa các sản phẩm đã thanh toán thành công khỏi store/giỏ hàng (nếu không phải mua ngay)
+        // Nếu là COD → chuyển hướng thẳng đến trang thành công
+        if (paymentMethod === 'COD') {
+          setIsOrderCompleted(true);
+          if (!buyNow) {
+            for (const item of cartItems) {
+              await removeItem(item.product, item.variant);
+            }
+          }
+          router.replace(`/checkout/success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${grandTotal}`);
+          return;
+        }
+
+        // Nếu là MOMO → gọi API tạo thanh toán MoMo rồi redirect
+        if (paymentMethod === 'MOMO') {
+          const momoRes = await createMoMoPayment(orderId);
+          if (momoRes.success && momoRes.data?.payUrl) {
+            setIsOrderCompleted(true);
+            if (!buyNow) {
+              for (const item of cartItems) {
+                await removeItem(item.product, item.variant);
+              }
+            }
+            // Redirect đến cổng thanh toán MoMo
+            window.location.href = momoRes.data.payUrl;
+          } else {
+            setAlert({
+              type: 'error',
+              message: momoRes.message || 'Không thể tạo thanh toán MoMo. Đơn hàng đã được tạo, vui lòng thanh toán từ trang Đơn hàng của tôi.',
+            });
+            setSubmitting(false);
+          }
+          return;
+        }
+
+        // Nếu là VNPay → gọi API tạo thanh toán VNPay rồi redirect
+        if (paymentMethod === 'VNPAY') {
+          const vnpayRes = await createVNPayPayment(orderId);
+          if (vnpayRes.success && vnpayRes.data?.paymentUrl) {
+            setIsOrderCompleted(true);
+            if (!buyNow) {
+              for (const item of cartItems) {
+                await removeItem(item.product, item.variant);
+              }
+            }
+            // Redirect đến cổng thanh toán VNPay
+            window.location.href = vnpayRes.data.paymentUrl;
+          } else {
+            setAlert({
+              type: 'error',
+              message: vnpayRes.message || 'Không thể tạo thanh toán VNPay. Đơn hàng đã được tạo, vui lòng thanh toán từ trang Đơn hàng của tôi.',
+            });
+            setSubmitting(false);
+          }
+          return;
+        }
+
+        // Fallback (không nên xảy ra)
+        setIsOrderCompleted(true);
         if (!buyNow) {
           for (const item of cartItems) {
             await removeItem(item.product, item.variant);
           }
         }
-
-        const orderId = data.data?._id || data.order?._id || data._id || '';
         router.replace(`/checkout/success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${grandTotal}`);
       } else {
         setAlert({ type: 'error', message: data.message || 'Lỗi đặt hàng' });
@@ -648,20 +810,44 @@ function CheckoutContent() {
               submitting={submitting}
               handlePlaceOrder={handlePlaceOrder}
               formatVND={formatVND}
+              paymentMethod={paymentMethod}
             />
 
-            {/* Cam kết bảo mật */}
-            <div className='bg-white rounded-2xl border border-slate-100 shadow-xs p-4 flex items-start gap-3'>
-              <ShieldCheck size={20} className='text-emerald-600 flex-shrink-0' />
-              <div>
-                <h4 className='text-[10px] font-bold text-slate-800 uppercase'>
-                  Thanh toán bảo mật 100%
-                </h4>
-                <p className='text-[9px] text-slate-400 mt-0.5 leading-relaxed font-semibold'>
-                  Hệ thống bảo mật SSL đạt chuẩn quốc tế. Thông tin cá nhân của bạn được cam kết mã hóa tuyệt đối.
-                </p>
+            {/* Cam kết & Chính sách */}
+            <div className='bg-white rounded-2xl border border-slate-100 shadow-xs p-4 space-y-4'>
+              <div className='flex items-start gap-3'>
+                <ShieldCheck size={20} className='text-emerald-600 flex-shrink-0' />
+                <div>
+                  <h4 className='text-[10px] font-bold text-slate-800 uppercase'>
+                    Thanh toán bảo mật 100%
+                  </h4>
+                  <p className='text-[9px] text-slate-400 mt-0.5 leading-relaxed font-semibold'>
+                    Hệ thống bảo mật SSL đạt chuẩn quốc tế. Thông tin cá nhân của bạn được cam kết mã hóa tuyệt đối.
+                  </p>
+                </div>
+              </div>
+
+              <div className='flex items-start gap-3 pt-3 border-t border-slate-50'>
+                <Truck size={20} className='text-blue-600 flex-shrink-0' />
+                <div>
+                  <h4 className='text-[10px] font-bold text-slate-800 uppercase'>
+                    Giao hàng siêu tốc
+                  </h4>
+                  <p className='text-[9px] text-slate-400 mt-0.5 leading-relaxed font-semibold'>
+                    Dự kiến từ 2 - 5 ngày làm việc, hỗ trợ giao hỏa tốc trong nội thành.
+                  </p>
+                </div>
+              </div>
+
+              <div className='flex items-start gap-3 pt-3 border-t border-slate-50'>
+                <RotateCcw size={20} className='text-orange-600 flex-shrink-0' />
+                <div>
+                  <h4 className='text-[10px] font-bold text-slate-800 uppercase'>Đổi trả tận tâm</h4>
+                  <p className='text-[9px] text-slate-400 mt-0.5 leading-relaxed font-semibold'>Lỗi là đổi mới trong vòng 7 ngày nếu có lỗi từ nhà sản xuất.</p>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>

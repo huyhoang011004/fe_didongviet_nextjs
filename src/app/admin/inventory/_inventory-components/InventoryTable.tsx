@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, Fragment } from 'react';
-import Image from 'next/image';
 import {
   ChevronDown,
   ChevronUp,
@@ -57,14 +56,20 @@ export default function InventoryTable({
   };
 
   const getProductThumbnail = (product: any) => {
-    // 1. Kiểm tra nếu có trường thumbnail trực tiếp (dạng chuỗi URL)
+    // 1. Ưu tiên imageUrl từ backend (đã tính sẵn full URL)
+    if (product.imageUrl) {
+      return product.imageUrl;
+    }
+    // 2. Kiểm tra nếu có trường thumbnail trực tiếp (dạng chuỗi URL)
     if (product.thumbnail) {
       return product.thumbnail.startsWith('http') ? product.thumbnail : `http://localhost:5000${product.thumbnail}`;
     }
-    // 2. Tìm ảnh có isThumbnail hoặc lấy ảnh đầu tiên từ mảng images
+    // 3. Tìm ảnh có isThumbnail hoặc lấy ảnh đầu tiên từ mảng images
     if (product.images && product.images.length > 0) {
       const thumb = product.images.find((img: any) => img.isThumbnail) || product.images[0];
-      return thumb.url.startsWith('http') ? thumb.url : `http://localhost:5000${thumb.url}`;
+      if (thumb?.url) {
+        return thumb.url.startsWith('http') ? thumb.url : `http://localhost:5000${thumb.url}`;
+      }
     }
     return null;
   };
@@ -128,12 +133,12 @@ export default function InventoryTable({
                     (inv: any) => (inv.branch?._id || inv.branch) === branch._id
                   );
                   const stock = invItem ? invItem.stock : 0;
-                  
+
                   // Nếu đang lọc chi nhánh, ta chỉ cộng totalStock của chi nhánh đang lọc
                   if (!selectedBranchFilter || branch._id === selectedBranchFilter) {
                     totalStock += stock;
                   }
-                  
+
                   // Trạng thái tổng luôn là trạng thái thấp nhất trong các chi nhánh (hoặc của chi nhánh đang lọc)
                   if (!selectedBranchFilter || branch._id === selectedBranchFilter) {
                     if (stock === 0) hasOutOfStock = true;
@@ -147,9 +152,8 @@ export default function InventoryTable({
                   {/* Hàng sản phẩm chính */}
                   <tr
                     key={product._id}
-                    className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer ${
-                      isExpanded ? 'bg-red-500/[0.02] dark:bg-red-500/[0.02]' : ''
-                    }`}
+                    className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer ${isExpanded ? 'bg-red-500/[0.02] dark:bg-red-500/[0.02]' : ''
+                      }`}
                     onClick={() => toggleRow(product._id)}
                   >
                     <td className='px-6 py-4 text-center' onClick={(e) => e.stopPropagation()}>
@@ -164,12 +168,10 @@ export default function InventoryTable({
                       <div className='flex items-center gap-3'>
                         {thumbUrl ? (
                           <div className='relative w-12 h-12 rounded-lg border border-slate-100 dark:border-slate-800 overflow-hidden bg-slate-50 dark:bg-slate-800 flex-shrink-0'>
-                            <Image
+                            <img
                               src={thumbUrl}
                               alt={product.name}
-                              fill
-                              sizes='48px'
-                              className='object-cover'
+                              className='h-full w-full object-contain'
                             />
                           </div>
                         ) : (
@@ -199,13 +201,12 @@ export default function InventoryTable({
                       {product.variants?.length || 0} bản
                     </td>
                     <td className='px-6 py-4 text-center font-bold text-slate-800 dark:text-slate-200'>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                        totalStock === 0 
-                          ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20' 
-                          : totalStock <= activeThreshold 
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${totalStock === 0
+                        ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'
+                        : totalStock <= activeThreshold
                           ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
-                      }`}>
+                        }`}>
                         {totalStock} máy
                       </span>
                     </td>

@@ -83,10 +83,10 @@ export function VoucherTable({
                   `}
                   >
                     {v.discountType === 'fixed'
-                      ? 'Tiền mặt'
+                      ? 'Tiền cố định'
                       : v.discountType === 'percentage'
                         ? 'Phần trăm'
-                        : 'Phân tầng HSSV'}
+                        : 'Dành riêng cho HSSV'}
                   </span>
                 </td>
                 <td className='py-4 px-6 font-bold text-didongviet-red'>

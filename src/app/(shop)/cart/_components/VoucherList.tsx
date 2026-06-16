@@ -73,10 +73,10 @@ export default function VoucherList({
                 <div
                   key={v.code}
                   className={`relative flex bg-white border rounded-xl overflow-hidden transition-all duration-200 shadow-2xs hover:shadow-xs group
-                    ${isApplied 
-                      ? 'border-emerald-200 bg-emerald-50/5' 
-                      : isBest 
-                        ? 'border-amber-200 hover:border-amber-300' 
+                    ${isApplied
+                      ? 'border-emerald-200 bg-emerald-50/5'
+                      : isBest
+                        ? 'border-amber-200 hover:border-amber-300'
                         : 'border-slate-100 hover:border-slate-200'
                     }
                   `}
@@ -84,10 +84,10 @@ export default function VoucherList({
                   {/* Trái: Phần vé xé với background gradient */}
                   <div
                     className={`w-16 flex flex-col items-center justify-center relative shrink-0 text-white select-none
-                      ${isApplied 
-                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
-                        : isBest 
-                          ? 'bg-gradient-to-br from-amber-500 to-orange-600' 
+                      ${isApplied
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
+                        : isBest
+                          ? 'bg-gradient-to-br from-amber-500 to-orange-600'
                           : 'bg-gradient-to-br from-red-500 to-didongviet-red'
                       }
                     `}
@@ -132,11 +132,15 @@ export default function VoucherList({
                         {v.title || v.description || `Giảm ngay ${formatVND(v._value)}`}
                       </div>
 
-                      {/* Thông tin hạn dùng & điều kiện đơn hàng */}
+                      {/* Thông tin hạn dùng & số lượt còn lại */}
                       <div className='flex items-center gap-2 text-[8px] text-slate-400 font-bold'>
                         <span className='flex items-center gap-0.5 shrink-0'>
                           <Clock size={9} />
-                          Hạn dùng: HSD gần nhất
+                          HSD: {v.expiryDate ? new Date(v.expiryDate).toLocaleDateString('vi-VN') : 'N/A'}
+                        </span>
+                        <span className='flex items-center gap-0.5 shrink-0'>
+                          <Ticket size={9} />
+                          Còn {typeof v.remainingUserUsage === 'number' ? v.remainingUserUsage : (v.maxUsagePerUser - (v.userUsageCount || 0))}/{v.maxUsagePerUser} lượt
                         </span>
                         {v.minOrderAmount > 0 && (
                           <span className='shrink-0 bg-slate-50 text-slate-500 px-1 py-0.2 rounded border border-slate-100'>
@@ -151,7 +155,7 @@ export default function VoucherList({
                       <div className='text-xs font-black text-didongviet-red font-mono shrink-0'>
                         -{formatVND(v._value)}
                       </div>
-                      
+
                       <button
                         onClick={() => onApplyVoucher(v)}
                         disabled={isApplied}

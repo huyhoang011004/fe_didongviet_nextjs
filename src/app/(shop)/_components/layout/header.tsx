@@ -212,10 +212,9 @@ export default function Header() {
             className={`
               flex items-center justify-between gap-4 md:gap-8 w-full min-w-0 
               transition-all duration-300 ease-in-out border-b border-white/10
-              ${
-                isHeaderVisible
-                  ? 'max-h-[35px] opacity-100 py-0.5 md:py-1'
-                  : 'max-h-0 opacity-0 py-0 pointer-events-none overflow-hidden border-none'
+              ${isHeaderVisible
+                ? 'max-h-[35px] opacity-100 py-0.5 md:py-1'
+                : 'max-h-0 opacity-0 py-0 pointer-events-none overflow-hidden border-none'
               }
             `}
           >
@@ -375,7 +374,7 @@ export default function Header() {
                 </DropdownMenu>
               </div>
 
-              {/* <Button
+              <Button
                 asChild
                 variant='header'
                 size='header-responsive'
@@ -390,7 +389,7 @@ export default function Header() {
                     Tin tức
                   </span>
                 </Link>
-              </Button> */}
+              </Button>
             </div>
 
             <div className='flex-1 max-w-xl h-9'>
@@ -457,7 +456,7 @@ export default function Header() {
                         <div className='max-h-[280px] overflow-y-auto divide-y divide-slate-100 no-scrollbar'>
                           {cartItems.slice(0, 5).map((item) => (
                             <div key={`${item.product}-${item.variant}`} className='p-3 flex gap-3 hover:bg-slate-50/40 transition-colors group'>
-                              <Link 
+                              <Link
                                 href={`/${item.categorySlug || 'dien-thoai'}/${item.slug}`}
                                 className='w-12 h-12 rounded-lg border border-slate-100 bg-slate-50 overflow-hidden flex items-center justify-center p-1 shrink-0'
                               >
@@ -468,7 +467,7 @@ export default function Header() {
                                   referrerPolicy='no-referrer'
                                 />
                               </Link>
-                              
+
                               <div className='flex-1 min-w-0 space-y-0.5'>
                                 <Link
                                   href={`/${item.categorySlug || 'dien-thoai'}/${item.slug}`}
@@ -513,7 +512,7 @@ export default function Header() {
                               {cartTotalPrice.toLocaleString('vi-VN')}đ
                             </span>
                           </div>
-                          
+
                           <div className='grid grid-cols-2 gap-2'>
                             <Button
                               asChild

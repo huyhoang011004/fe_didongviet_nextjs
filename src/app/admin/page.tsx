@@ -235,7 +235,7 @@ function AdminContent() {
         {/* Tỷ lệ đơn hàng theo Kênh Omnichannel */}
         <Card className='border-slate-200/50 shadow-xs rounded-2xl'>
           <CardHeader>
-            <CardTitle className='text-base font-bold text-slate-800 dark:text-white'>Tỷ Lệ Đơn Hàng Theo Kênh (Omnichannel)</CardTitle>
+            <CardTitle className='text-base font-bold text-slate-800 dark:text-white'>Tỷ Lệ Đơn Hàng Theo Kênh</CardTitle>
             <CardDescription className='text-xs'>Phân phối sản lượng đơn hàng trên toàn bộ điểm chạm độc lập</CardDescription>
           </CardHeader>
           <CardContent className='h-[260px] flex items-center justify-center'>

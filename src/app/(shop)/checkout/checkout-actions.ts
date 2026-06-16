@@ -89,7 +89,7 @@ export async function loadProductDetails(productIds: string[]) {
 export async function applyVoucherCode(code: string, selectedTotalPrice: number) {
   try {
     const srv = await applyVoucherServer(code);
-    
+
     if (srv.status === 200 && srv.data && srv.data.success) {
       const payload = srv.data.data || srv.data;
       return {
@@ -136,6 +136,11 @@ export async function applyVoucherCode(code: string, selectedTotalPrice: number)
 
 export async function placeOrder(payload: any) {
   try {
+    // Debug log
+    console.log('========== PLACE ORDER PAYLOAD ==========');
+    console.log(JSON.stringify(payload, null, 2));
+    console.log('=========================================');
+
     const res = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -148,6 +153,75 @@ export async function placeOrder(payload: any) {
     return {
       success: false,
       message: 'Lỗi kết nối khi đặt hàng',
+    };
+  }
+}
+
+// ============================================================
+// Payment: Tạo thanh toán MoMo
+// ============================================================
+export async function createMoMoPayment(orderId: string) {
+  try {
+    const res = await fetch('/api/payments/momo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId }),
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return {
+      success: false,
+      message: 'Lỗi kết nối khi tạo thanh toán MoMo',
+    };
+  }
+}
+
+// ============================================================
+// Payment: Tạo thanh toán VNPay
+// ============================================================
+export async function createVNPayPayment(orderId: string) {
+  try {
+    const res = await fetch('/api/payments/vnpay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId }),
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return {
+      success: false,
+      message: 'Lỗi kết nối khi tạo thanh toán VNPay',
+    };
+  }
+}
+
+// ============================================================
+// Shipping: Tính phí vận chuyển GHN
+// ============================================================
+export async function calculateShippingFee(payload: {
+  fromDistrictId: number;
+  toDistrictId?: number;
+  toDistrictName?: string;
+  toWardCode?: string;
+  toWardName?: string;
+  weight?: number;
+  insuredValue?: number;
+}) {
+  try {
+    const res = await fetch(`${API_URL}/ghn/fee`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return {
+      success: true,
+      data: { fee: 40000, serviceName: 'GHN (fallback)', estimatedDeliveryTime: '', fallback: true },
+      message: 'Không thể kết nối GHN, sử dụng phí mặc định',
     };
   }
 }

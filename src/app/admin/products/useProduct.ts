@@ -194,26 +194,18 @@ export function useProduct() {
     setProductsPage(1);
   }, [productsSearch, selectedCategoryFilter, selectedBranchFilter]);
 
-  // Thay đổi trạng thái hiển thị Sản phẩm (Ẩn/Hiện) - Toggle thông minh
+  // Thay đổi trạng thái hiển thị Sản phẩm (Ẩn/Hiện) - Dùng PATCH toggle
   const handleToggleProductStatus = async (
     id: string,
     currentActive: boolean,
   ) => {
-    let res;
-    if (currentActive) {
-      // Đang hiển thị -> Ẩn (xóa mềm)
-      res = await softDeleteProductAction(id);
-    } else {
-      // Đang ẩn -> Hiện (update isActive = true)
-      const formData = new FormData();
-      formData.append('isActive', 'true');
-      res = await updateProductAction(id, formData);
-    }
+    // PATCH /products/:id sẽ tự động toggle isActive = !isActive
+    const res = await softDeleteProductAction(id);
 
     if (res.success) {
       setAlert({
         type: 'success',
-        message: 'Cập nhật trạng thái sản phẩm thành công!',
+        message: currentActive ? 'Đã ẩn sản phẩm thành công!' : 'Đã hiện sản phẩm thành công!',
       });
       fetchProducts();
     } else {

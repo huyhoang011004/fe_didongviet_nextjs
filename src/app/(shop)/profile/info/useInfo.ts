@@ -1,11 +1,14 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useTransition } from 'react';
 import { ProfileContext } from '../layout';
 import { updateProfile, changePassword } from './info-actions';
+import { fetchStudentProfile, uploadStudentCardFetch, updateStudentProfileFetch } from './student-actions';
+import { StudentProfile } from '@/types/student';
 
 export function useInfo() {
-  const { user, setUser, studentProfile } = useContext(ProfileContext);
+  const { user, setUser, studentProfile: contextStudentProfile } = useContext(ProfileContext);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(contextStudentProfile || null);
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'password'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'password' | 'student'>('profile');
 
   // State Tab 1: Hồ sơ
   const [isEditing, setIsEditing] = useState(false);
@@ -30,6 +33,9 @@ export function useInfo() {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // State Student Profile
+  const [studentPending, startStudent] = useTransition();
 
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -185,6 +191,48 @@ export function useInfo() {
     }
   };
 
+  // Refresh student profile từ API (client fetch — tự động gửi cookie)
+  const studentProfileRefresh = async () => {
+    const result = await fetchStudentProfile();
+    if (result.success && result.data) {
+      setStudentProfile(result.data);
+    }
+  };
+
+  // Nộp / Cập nhật hồ sơ HSSV (gửi cả ảnh + thông tin trong 1 lần)
+  const handleSubmitStudentProfile = async (formData: FormData) => {
+    startStudent(async () => {
+      // Bước 1: Upload ảnh thẻ (nếu có file mới)
+      const file = formData.get('studentCardImage') as File | null;
+
+      if (file && file.size > 0) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('studentCardImage', file);
+        const uploadResult = await uploadStudentCardFetch(uploadFormData);
+        if (!uploadResult.success) {
+          setAlert({ type: 'error', message: uploadResult.message || 'Tải ảnh thẻ thất bại!' });
+          return;
+        }
+      }
+
+      // Bước 2: Cập nhật thông tin
+      const studentIdCard = formData.get('studentIdCard') as string;
+      const schoolName = formData.get('schoolName') as string;
+
+      const updateResult = await updateStudentProfileFetch({
+        studentIdCard: studentIdCard || undefined,
+        schoolName: schoolName || undefined,
+      });
+
+      if (updateResult.success) {
+        setAlert({ type: 'success', message: updateResult.message || 'Cập nhật hồ sơ HSSV thành công!' });
+        await studentProfileRefresh();
+      } else {
+        setAlert({ type: 'error', message: updateResult.message || 'Cập nhật thất bại!' });
+      }
+    });
+  };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldPassword || !newPassword || !confirmPassword) {
@@ -222,6 +270,9 @@ export function useInfo() {
     user,
     setUser,
     studentProfile,
+    studentPending,
+    handleSubmitStudentProfile,
+    studentProfileRefresh,
     activeTab,
     setActiveTab,
     isEditing,

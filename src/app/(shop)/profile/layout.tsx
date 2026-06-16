@@ -136,7 +136,7 @@ export default function ProfileLayout({
       <div className='min-h-screen bg-slate-50 font-sans text-slate-700 pb-12'>
         {/* BREADCRUMB */}
         <nav className='bg-white border-b border-slate-100 py-2.5'>
-          <div className='max-w-6xl mx-auto px-4 flex items-center gap-1.5 text-[10px] text-gray-400 font-semibold'>
+          <div className='max-w-[1400px] mx-auto px-[30px] flex items-center gap-1.5 text-[10px] text-gray-400 font-semibold'>
             <Link
               href='/'
               className='hover:text-didongviet-red transition-colors'
@@ -148,7 +148,7 @@ export default function ProfileLayout({
           </div>
         </nav>
 
-        <div className='max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-5'>
+        <div className='max-w-[1400px] mx-auto px-[30px] py-6 grid grid-cols-1 lg:grid-cols-4 gap-6'>
           {/* SIDEBAR NAVIGATION */}
           <aside className='lg:col-span-1 space-y-4 h-fit sticky top-20'>
             {/* THÔNG TIN TÀI KHOẢN MINI */}

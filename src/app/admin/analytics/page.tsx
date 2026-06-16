@@ -12,6 +12,7 @@ import {
   Building2,
   BarChart3,
   CalendarDays,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -25,6 +26,7 @@ import DateRangePicker from '@/app/admin/analytics/_components/date-range-picker
 import StatsCards from '@/app/admin/analytics/_components/stats-cards';
 import OrderStockGrid from '@/app/admin/analytics/_components/order-stock-grid';
 import { useAnalytics } from './useAnalytics';
+import { exportAnalyticsToExcel } from './export-utils';
 
 function AnalyticsContent() {
   const {
@@ -44,6 +46,8 @@ function AnalyticsContent() {
     setBranchId,
     sortBy,
     setSortBy,
+    startDate,
+    endDate,
     branches,
     analyticsData,
     bestSellingProducts,
@@ -61,6 +65,22 @@ function AnalyticsContent() {
     metricConfig,
     refetch,
   } = useAnalytics();
+
+  const handleExportExcel = () => {
+    const branchName = branches.find((b: any) => b._id === branchId)?.name || 'Tất cả';
+    const dateRange = `${startDate || 'N/A'} - ${endDate || 'N/A'}`;
+    exportAnalyticsToExcel({
+      analyticsData,
+      bestSellingProducts,
+      orderStatus,
+      lowStockProducts,
+      oldStockProducts,
+      branchRanking,
+      chartData,
+      branchName,
+      dateRange,
+    });
+  };
 
   return (
     <div className='space-y-6 relative'>
@@ -88,6 +108,18 @@ function AnalyticsContent() {
           <p className='text-sm text-slate-400 mt-1'>
             Phân tích hiệu suất bán hàng của toàn hệ thống Di Động Việt
           </p>
+        </div>
+        <div className='flex items-center gap-2'>
+          <Button
+            onClick={handleExportExcel}
+            variant='outline'
+            size='sm'
+            className='text-xs font-semibold cursor-pointer hover:text-emerald-600 hover:bg-emerald-50 border-emerald-200'
+            disabled={loading}
+          >
+            <FileSpreadsheet size={14} className='mr-1.5' />
+            Xuất Excel
+          </Button>
         </div>
       </div>
 
@@ -247,7 +279,7 @@ function AnalyticsContent() {
                       <td className='py-3 font-bold text-slate-900 dark:text-white'>#{index + 1}</td>
                       <td className='py-3'>
                         <div className='flex items-center gap-3'>
-                          {product.image ? (
+                          {product.image && product.image[0] ? (
                             <Image
                               src={product.image[0]}
                               alt={product.productName || product.name}

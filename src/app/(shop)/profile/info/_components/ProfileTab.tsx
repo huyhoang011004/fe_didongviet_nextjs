@@ -2,6 +2,7 @@ import React from 'react';
 import { ShieldCheck, Award } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { resolveImageUrl } from '@/shared/lib/utils';
 
 interface ProfileTabProps {
   user: any;
@@ -106,36 +107,49 @@ export default function ProfileTab({
               Hồ sơ Học sinh - Sinh viên
             </h2>
             <span
-              className={`px-2 py-0.5 rounded-full text-[8px] font-bold border ${
-                studentProfile.isHSSVVerified === 'Đã xác thực'
-                  ? 'bg-emerald-50 text-emerald-600 border-emerald-205'
-                  : 'bg-amber-50 text-amber-600 border-amber-205'
-              }`}
+              className={`px-2 py-0.5 rounded-full text-[8px] font-bold border ${studentProfile.isHSSVVerified === 'Đã xác thực'
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                : studentProfile.isHSSVVerified === 'Bị từ chối'
+                  ? 'bg-red-50 text-red-600 border-red-200'
+                  : studentProfile.isHSSVVerified === 'Đang chờ'
+                    ? 'bg-amber-50 text-amber-600 border-amber-200'
+                    : 'bg-slate-50 text-slate-500 border-slate-200'
+                }`}
             >
               {studentProfile.isHSSVVerified}
             </span>
           </div>
 
-          <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
-            <div className='space-y-1'>
-              <span className='text-[9px] font-black text-slate-400 uppercase block'>Trường học</span>
-              <span className='text-xs font-bold text-slate-700 block truncate'>
-                {studentProfile.schoolName}
-              </span>
-            </div>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div className='space-y-1'>
               <span className='text-[9px] font-black text-slate-400 uppercase block'>Mã số sinh viên</span>
               <span className='text-xs font-bold text-slate-700 block'>
-                {studentProfile.studentId}
+                {studentProfile.studentIdCard || '---'}
               </span>
             </div>
             <div className='space-y-1'>
-              <span className='text-[9px] font-black text-slate-400 uppercase block'>Năm tốt nghiệp dự kiến</span>
-              <span className='text-xs font-bold text-slate-700 block'>
-                {new Date(studentProfile.graduationDate).toLocaleDateString('vi-VN')}
+              <span className='text-[9px] font-black text-slate-400 uppercase block'>Trường học</span>
+              <span className='text-xs font-bold text-slate-700 block truncate'>
+                {studentProfile.schoolName || '---'}
               </span>
             </div>
           </div>
+
+          {studentProfile.studentCardImage && (
+            <div className='mt-3 space-y-1'>
+              <span className='text-[9px] font-black text-slate-400 uppercase block'>Ảnh thẻ sinh viên</span>
+              <div className='bg-slate-100 rounded-lg overflow-hidden border border-slate-200 max-h-[180px] flex items-center justify-center p-1'>
+                <img
+                  src={resolveImageUrl(studentProfile.studentCardImage)}
+                  alt='Thẻ sinh viên'
+                  className='max-h-[160px] w-auto object-contain rounded'
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/auth-image.webp';
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

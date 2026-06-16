@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCartStore } from '@/app/(shop)/cart/useCartStore';
 import { VIETNAM_PROVINCES, getBranchRegion } from './_components/checkout-utils';
 import { calcVoucherValue } from '../cart/cart-actions';
-import { loadCheckoutData, loadProductDetails, applyVoucherCode, placeOrder } from './checkout-actions';
+import { loadCheckoutData, loadProductDetails, applyVoucherCode, placeOrder, createMoMoPayment, createVNPayPayment } from './checkout-actions';
 
 const formatVND = (num: number) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -251,7 +251,7 @@ export function useCheckout() {
     setVoucherLoading(true);
     try {
       const result = await applyVoucherCode(voucherCode.toUpperCase(), selectedTotalPrice);
-      
+
       if (result.success) {
         setAppliedVoucher(result.voucher);
         setDiscountAmount(result.discountAmount);
@@ -272,7 +272,7 @@ export function useCheckout() {
     setVoucherLoading(true);
     try {
       const result = await applyVoucherCode(code, selectedTotalPrice);
-      
+
       if (result.success) {
         setAppliedVoucher(result.voucher);
         setDiscountAmount(result.discountAmount);
@@ -325,24 +325,80 @@ export function useCheckout() {
           streetAddress,
         },
         paymentMethod,
-        discountDMember: discountAmount,
+        discountDMember: 0,
         tradeInBonus: 0,
         shippingPrice,
         branchId: selectedBranchId,
+        appliedVoucher: appliedVoucher?.code || null,
+        discountVoucher: discountAmount || 0,
       };
 
       const data = await placeOrder(payload);
-      
-      if (data.success) {
-        setIsOrderCompleted(true);
 
+      if (data.success) {
+        const orderId = data.data?._id || data.order?._id || data._id || '';
+
+        // COD → chuyển thẳng trang thành công
+        if (paymentMethod === 'COD') {
+          setIsOrderCompleted(true);
+          if (!buyNow) {
+            for (const item of cartItems) {
+              await removeItem(item.product, item.variant);
+            }
+          }
+          router.replace(`/checkout/success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${grandTotal}`);
+          return;
+        }
+
+        // MOMO → gọi API tạo thanh toán rồi redirect
+        if (paymentMethod === 'MOMO') {
+          const momoRes = await createMoMoPayment(orderId);
+          if (momoRes.success && momoRes.data?.payUrl) {
+            setIsOrderCompleted(true);
+            if (!buyNow) {
+              for (const item of cartItems) {
+                await removeItem(item.product, item.variant);
+              }
+            }
+            window.location.href = momoRes.data.payUrl;
+          } else {
+            setAlert({
+              type: 'error',
+              message: momoRes.message || 'Không thể tạo thanh toán MoMo. Đơn hàng đã được tạo, vui lòng thanh toán từ trang Đơn hàng của tôi.',
+            });
+            setSubmitting(false);
+          }
+          return;
+        }
+
+        // VNPay → gọi API tạo thanh toán rồi redirect
+        if (paymentMethod === 'VNPAY') {
+          const vnpayRes = await createVNPayPayment(orderId);
+          if (vnpayRes.success && vnpayRes.data?.paymentUrl) {
+            setIsOrderCompleted(true);
+            if (!buyNow) {
+              for (const item of cartItems) {
+                await removeItem(item.product, item.variant);
+              }
+            }
+            window.location.href = vnpayRes.data.paymentUrl;
+          } else {
+            setAlert({
+              type: 'error',
+              message: vnpayRes.message || 'Không thể tạo thanh toán VNPay. Đơn hàng đã được tạo, vui lòng thanh toán từ trang Đơn hàng của tôi.',
+            });
+            setSubmitting(false);
+          }
+          return;
+        }
+
+        // Fallback
+        setIsOrderCompleted(true);
         if (!buyNow) {
           for (const item of cartItems) {
             await removeItem(item.product, item.variant);
           }
         }
-
-        const orderId = data.data?._id || data.order?._id || data._id || '';
         router.replace(`/checkout/success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${grandTotal}`);
       } else {
         setAlert({ type: 'error', message: data.message || 'Lỗi đặt hàng' });

@@ -76,9 +76,12 @@ export function useShop() {
     p.name.toLowerCase().includes('iphone'),
   );
 
-  const samsungProducts = allProducts.filter(
-    (p) => p.brand.toLowerCase() === 'samsung',
-  );
+  const samsungProducts = allProducts.filter((p) => {
+    const isSamsung = p.brand?.toLowerCase() === 'samsung';
+    const name = p.name?.toLowerCase() || '';
+    const isWatch = name.includes('watch') || name.includes('đồng hồ');
+    return isSamsung && !isWatch;
+  });
 
   const oppoXiaomiProducts = allProducts.filter((p) => {
     const brand = p.brand?.toLowerCase() || '';

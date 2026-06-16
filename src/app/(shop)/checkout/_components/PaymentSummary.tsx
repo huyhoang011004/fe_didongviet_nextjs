@@ -11,6 +11,7 @@ interface PaymentSummaryProps {
   submitting: boolean;
   handlePlaceOrder: () => void;
   formatVND: (num: number) => string;
+  paymentMethod?: string;
 }
 
 export default function PaymentSummary({
@@ -21,6 +22,7 @@ export default function PaymentSummary({
   submitting,
   handlePlaceOrder,
   formatVND,
+  paymentMethod = 'COD',
 }: PaymentSummaryProps) {
   return (
     <div className='bg-white rounded-2xl border border-slate-100 shadow-xs p-6 space-y-4'>
@@ -72,7 +74,13 @@ export default function PaymentSummary({
           disabled={submitting}
           className='w-full bg-didongviet-red hover:bg-red-700 text-white py-5.5 rounded-xl font-black border-none shadow-md cursor-pointer text-xs flex items-center justify-center gap-1.5 transition-transform hover:scale-[1.01] disabled:opacity-70 disabled:hover:scale-100'
         >
-          {submitting ? 'ĐANG XỬ LÝ ĐƠN HÀNG...' : 'ĐẶT HÀNG NGAY'}
+          {submitting
+            ? 'ĐANG XỬ LÝ...'
+            : paymentMethod === 'MOMO'
+              ? 'THANH TOÁN QUA MOMO'
+              : paymentMethod === 'VNPAY'
+                ? 'THANH TOÁN QUA VNPAY'
+                : 'ĐẶT HÀNG NGAY'}
         </Button>
       </div>
     </div>

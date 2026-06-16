@@ -148,10 +148,9 @@ export default function ProductSection({
                 key={tab}
                 onClick={() => setSelectedTab(tab)}
                 className={`px-3 py-1 text-[10px] font-bold rounded-lg border transition-all cursor-pointer whitespace-nowrap
-                  ${
-                    selectedTab === tab
-                      ? 'border-didongviet-red bg-red-50 text-didongviet-red dark:bg-red-950/20'
-                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850'
+                  ${selectedTab === tab
+                    ? 'border-didongviet-red bg-red-50 text-didongviet-red dark:bg-red-950/20'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850'
                   }
                 `}
               >
@@ -223,16 +222,13 @@ export default function ProductSection({
                   className='w-[160px] sm:w-[210px] shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-xl p-3 flex flex-col justify-between space-y-2 hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700 transition-all group relative overflow-hidden'
                 >
                   {/* BADGES HÀNG ĐẦU */}
-                  <div className='flex items-center justify-between gap-1 w-full relative z-10'>
-                    <span className='px-1.5 py-0.5 border border-red-205 dark:border-red-900/40 text-didongviet-red text-[8px] sm:text-[9px] font-bold rounded bg-white dark:bg-slate-900'>
-                      Trả góp 0%
-                    </span>
-                    {percentOff > 0 && (
-                      <span className='px-1 py-0.5 bg-didongviet-red text-white text-[8px] sm:text-[9px] font-black rounded flex items-center gap-0.5'>
-                        ↓{percentOff}%
+                  {percentOff > 0 && (
+                    <div className='flex items-center justify-end gap-1 w-full relative z-10'>
+                      <span className='px-1.5 py-0.5 bg-didongviet-red text-white text-[8px] sm:text-[9px] font-black rounded flex items-center gap-0.5'>
+                        Giảm {percentOff}%
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* LOGO ĐỐI TÁC ỦY QUYỀN */}
                   <div className='flex flex-col items-center justify-center py-1 border-b border-slate-100/50 dark:border-slate-800/50 mb-1'>

@@ -25,7 +25,7 @@ export default function OrderCard({
   isReviewed,
 }: OrderCardProps) {
   const isPaid = order.isPaid || (order.paymentMethod === 'COD' && order.orderStatus === 'Đã giao');
-  
+
   // Kiểm tra điều kiện 7 ngày từ lúc giao hàng thành công
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
   const isAfter7Days = order.deliveredAt
@@ -66,7 +66,7 @@ export default function OrderCard({
           <div key={itemIdx} className='flex gap-3.5 py-3 items-center'>
             <div className='h-12 w-12 rounded-lg border border-slate-100 flex items-center justify-center p-1 bg-white shrink-0 shadow-2xs'>
               <img
-                src={item.image || '/placeholder-product.png'}
+                src={item.image && (item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`) || '/placeholder-product.png'}
                 alt={item.name}
                 className='h-full w-full object-contain'
                 referrerPolicy='no-referrer'

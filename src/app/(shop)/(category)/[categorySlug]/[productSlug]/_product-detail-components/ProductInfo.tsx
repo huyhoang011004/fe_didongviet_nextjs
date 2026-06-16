@@ -168,19 +168,15 @@ export default function ProductInfo({
           },
           {
             icon: Zap,
-            text: 'Giảm thêm 500.000đ khi thanh toán qua VNPAY / MoMo',
+            text: 'Giảm thêm 200.000đ khi thanh toán qua VNPAY / MoMo',
             color: 'text-blue-600 bg-blue-50',
           },
           {
-            icon: RotateCw,
-            text: 'Thu cũ đổi mới — Trợ giá lên đến 2.000.000đ',
+            icon: Layers,
+            text: 'Phụ kiện mua kèm Combo bán kèm Phụ Kiện giảm thêm 3%',
             color: 'text-emerald-600 bg-emerald-50',
           },
-          {
-            icon: Percent,
-            text: 'Giảm 2% phí khi trả góp qua thẻ tín dụng',
-            color: 'text-purple-600 bg-purple-50',
-          },
+
         ].map((promo, idx) => (
           <div
             key={idx}
@@ -191,7 +187,7 @@ export default function ProductInfo({
             >
               <promo.icon size={11} />
             </span>
-            <span className='text-[10px] font-semibold text-slate-700 leading-snug flex-1'>
+            <span className='text-[10px] font-semibold text-slate-700 leading-snug flex-1 translate-y-[5px]'>
               {promo.text}
             </span>
             <ChevronRight
@@ -382,68 +378,35 @@ export default function ProductInfo({
           </span>
         </div>
 
-        {/* Khung chứa các nút bấm mua hàng */}
         <div className='flex flex-col gap-2.5'>
-          {/* Hàng 1: Nút MUA NGAY (Full width) */}
-          <Button
-            disabled={currentVariantStock <= 0 || isBuyingNow}
-            className='w-full bg-didongviet-red hover:bg-red-700 text-white py-6 rounded-xl font-bold border-none shadow-md cursor-pointer text-[12px] flex items-center justify-center gap-2 group transition-all hover:scale-[1.005] disabled:opacity-70 h-12'
-            onClick={handleBuyNow}
-          >
-            {isBuyingNow ? (
-              <Loader2 size={16} className='animate-spin' />
-            ) : (
-              <ShoppingBag
-                size={16}
-                className='group-hover:animate-bounce shrink-0'
-              />
-            )}
-            <div className='text-left leading-tight'>
-              <span className='block font-black uppercase tracking-wide'>
-                MUA NGAY GIAO NHANH 2H
-              </span>
-              <span className='block text-[8px] font-normal text-white/80'>
-                Hoặc nhận trực tiếp tại cửa hàng gần nhất
-              </span>
-            </div>
-          </Button>
-
-          {/* Hàng 2: Nút Thêm vào giỏ và Trả góp (Chia đôi 50/50) */}
-          <div className='grid grid-cols-2 gap-2.5'>
+          <div className='flex gap-2.5'>
             {/* Nút Thêm vào giỏ */}
             <Button
               disabled={currentVariantStock <= 0 || isAddingToCart}
               variant='outline'
-              className='border-didongviet-red text-didongviet-red hover:bg-red-50 py-5 rounded-xl font-bold cursor-pointer text-[11px] flex items-center justify-center gap-1.5 transition-all hover:scale-[1.005] h-10 shadow-3xs'
+              className='flex-1 border-didongviet-red text-didongviet-red hover:bg-red-50 rounded-xl font-bold cursor-pointer text-[11px] flex items-center justify-center gap-2 transition-all hover:scale-[1.005] h-12 shadow-3xs'
               onClick={handleAddToCart}
             >
               {isAddingToCart ? (
-                <Loader2 size={14} className='animate-spin' />
+                <Loader2 size={16} className='animate-spin' />
               ) : (
-                <ShoppingCart size={14} className='shrink-0' />
+                <ShoppingCart size={16} className='shrink-0' />
               )}
-              <span className='font-black uppercase'>Thêm vào giỏ</span>
+              <span className='font-black uppercase tracking-wide'>Thêm giỏ hàng</span>
             </Button>
 
-            {/* Nút Trả góp */}
+            {/* Nút MUA NGAY */}
             <Button
-              variant='outline'
-              disabled={currentVariantStock <= 0}
-              className='border-slate-200 text-slate-800 hover:bg-slate-50 py-5 rounded-xl font-bold cursor-pointer text-[11px] flex flex-col justify-center items-center leading-tight transition-all hover:scale-[1.005] h-10 shadow-3xs'
-              onClick={() =>
-                setAlert({
-                  type: 'success',
-                  message: 'Đang chuyển hướng sang trang đăng ký trả góp 0%...',
-                })
-              }
+              disabled={currentVariantStock <= 0 || isBuyingNow}
+              className='flex-[1.5] bg-didongviet-red hover:bg-red-700 text-white rounded-xl font-bold border-none shadow-md cursor-pointer text-[11px] flex items-center justify-center gap-2 group transition-all hover:scale-[1.005] disabled:opacity-70 h-12'
+              onClick={handleBuyNow}
             >
-              <span className='font-black uppercase flex items-center gap-1'>
-                <Percent size={12} className='text-amber-500' />
-                <span>Trả góp 0%</span>
-              </span>
-              <span className='text-[8px] font-normal text-slate-400 mt-0.5'>
-                Duyệt hồ sơ nhanh chỉ 5 phút
-              </span>
+              {isBuyingNow ? (
+                <Loader2 size={16} className='animate-spin' />
+              ) : (
+                <ShoppingBag size={16} className='group-hover:animate-bounce shrink-0' />
+              )}
+              <span className='font-black uppercase tracking-wide'>MUA NGAY</span>
             </Button>
           </div>
         </div>

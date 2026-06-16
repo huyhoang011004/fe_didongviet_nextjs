@@ -1,6 +1,6 @@
 'use client';
 
-import { X, MapPin, CreditCard, ShoppingBag, DollarSign, Calendar, Truck, AlertTriangle, Check, PackageCheck, Store, ArrowRightLeft } from 'lucide-react';
+import { X, MapPin, CreditCard, ShoppingBag, DollarSign, Calendar, Truck, AlertTriangle, Check, PackageCheck, Store, ArrowRightLeft, Hash } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 
 interface OrderDetailsModalProps {
@@ -97,33 +97,39 @@ export function OrderDetailsModal({ isOpen, order, onClose, onUpdateStatus, onDe
           {/* Grid Thông tin nhận hàng, Chi nhánh giao hàng & Thanh toán */}
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
 
-            {/* 1. Chi nhánh chịu trách nhiệm giao hàng (Phần mới thêm) */}
-            <div className='space-y-2.5 bg-blue-50/30 dark:bg-blue-950/10 p-4 rounded-xl border border-blue-100/70 dark:border-blue-900/40 sm:col-span-2'>
-              <h4 className='text-xs font-black text-blue-800 dark:text-blue-400 uppercase flex items-center gap-1.5 border-b border-blue-100/50 dark:border-blue-900/30 pb-1.5'>
-                <Store size={14} className='text-blue-600 dark:text-blue-400' />
-                Chi nhánh chịu trách nhiệm xuất kho / Giao hàng
-              </h4>
-              {order.deliveryBranch ? (
-                <div className='space-y-1 dark:text-slate-300'>
-                  <p className='font-bold text-slate-800 dark:text-white text-sm'>
-                    {order.deliveryBranch.name || 'Hệ thống Di Động Việt'}
-                  </p>
-                  <p>
-                    <span className='text-slate-400'>Địa chỉ chi nhánh:</span>{' '}
-                    <span className='text-slate-700 dark:text-slate-200 leading-relaxed'>
-                      {order.deliveryBranch.address || 'Chưa cập nhật địa chỉ cụ thể'}
-                    </span>
-                  </p>
-                  {order.deliveryBranch.phone && (
-                    <p><span className='text-slate-400'>Hotline chi nhánh:</span> {order.deliveryBranch.phone}</p>
+            {/* 1. Chi nhánh chịu trách nhiệm giao hàng */}
+            {/* Ưu tiên deliveryBranch (snapshot), fallback sang order.branch (populated) */}
+            {(() => {
+              const branchData = order.deliveryBranch || order.branch;
+              return (
+                <div className='space-y-2.5 bg-blue-50/30 dark:bg-blue-950/10 p-4 rounded-xl border border-blue-100/70 dark:border-blue-900/40 sm:col-span-2'>
+                  <h4 className='text-xs font-black text-blue-800 dark:text-blue-400 uppercase flex items-center gap-1.5 border-b border-blue-100/50 dark:border-blue-900/30 pb-1.5'>
+                    <Store size={14} className='text-blue-600 dark:text-blue-400' />
+                    Chi nhánh chịu trách nhiệm xuất kho / Giao hàng
+                  </h4>
+                  {branchData ? (
+                    <div className='space-y-1 dark:text-slate-300'>
+                      <p className='font-bold text-slate-800 dark:text-white text-sm'>
+                        {branchData.name || 'Hệ thống Di Động Việt'}
+                      </p>
+                      <p>
+                        <span className='text-slate-400'>Địa chỉ chi nhánh:</span>{' '}
+                        <span className='text-slate-700 dark:text-slate-200 leading-relaxed'>
+                          {branchData.address || 'Chưa cập nhật địa chỉ cụ thể'}
+                        </span>
+                      </p>
+                      {branchData.phone && (
+                        <p><span className='text-slate-400'>Hotline chi nhánh:</span> {branchData.phone}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className='text-slate-400 italic animate-pulse'>
+                      Đơn hàng chưa được điều phối hoặc phân bổ cho chi nhánh cụ thể.
+                    </p>
                   )}
                 </div>
-              ) : (
-                <p className='text-slate-400 italic animate-pulse'>
-                  Đơn hàng chưa được điều phối hoặc phân bổ cho chi nhánh cụ thể.
-                </p>
-              )}
-            </div>
+              );
+            })()}
 
             {/* 2. Địa chỉ nhận hàng hoặc Chi nhánh nơi khách đến lấy */}
             <div className='space-y-2.5 bg-slate-50/50 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-100/70 dark:border-slate-800/60'>
@@ -195,6 +201,36 @@ export function OrderDetailsModal({ isOpen, order, onClose, onUpdateStatus, onDe
               ))}
             </div>
           </div>
+
+          {/* 4.5. MÃ VẬN ĐƠN GHN */}
+          {order.ghnOrderCode && (
+            <div className='space-y-3'>
+              <h4 className='text-xs font-black text-slate-850 dark:text-white uppercase flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-1.5'>
+                <Truck size={14} className='text-emerald-600' />
+                Thông tin vận đơn GHN
+              </h4>
+              <div className='bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-900/80 font-semibold space-y-2 shadow-3xs'>
+                <div className='flex justify-between text-emerald-700 dark:text-emerald-300'>
+                  <span className='flex items-center gap-1.5'>
+                    <Hash size={12} />
+                    Mã vận đơn GHN:
+                  </span>
+                  <span className='font-mono font-black text-sm'>{order.ghnOrderCode}</span>
+                </div>
+                {order.ghnExpectedDeliveryTime && (
+                  <div className='flex justify-between text-emerald-600 dark:text-emerald-400'>
+                    <span>Dự kiến giao hàng:</span>
+                    <span className='font-mono'>
+                      {new Date(order.ghnExpectedDeliveryTime).toLocaleDateString('vi-VN', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 5. Chi tiết chi phí */}
           <div className='space-y-3'>

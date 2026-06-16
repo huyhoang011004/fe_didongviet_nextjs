@@ -124,7 +124,7 @@ export default function OrderDetailModal({ order, onClose, formatVND }: OrderDet
               {order.orderItems?.map((item: any, itemIdx: number) => (
                 <div key={itemIdx} className='flex gap-3.5 p-3.5 items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors'>
                   <div className='h-12 w-12 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center justify-center p-1 bg-white shrink-0 shadow-3xs'>
-                    <img src={item.image || '/placeholder-product.png'} alt={item.name} className='h-full w-full object-contain' referrerPolicy='no-referrer' />
+                    <img src={item.image && (item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`) || '/placeholder-product.png'} alt={item.name} className='h-full w-full object-contain' referrerPolicy='no-referrer' />
                   </div>
                   <div className='flex-1 min-w-0'>
                     <h5 className='text-xs font-bold text-slate-800 dark:text-white leading-snug line-clamp-1'>{item.name}</h5>

@@ -4,7 +4,8 @@ import { useInfo } from './useInfo';
 import ProfileTab from './_components/ProfileTab';
 import AddressesTab from './_components/AddressesTab';
 import PasswordTab from './_components/PasswordTab';
-import { ShieldCheck, MapPin, Lock, User as UserIcon, CheckCircle, AlertCircle } from 'lucide-react';
+import StudentProfileTab from './_components/StudentProfileTab';
+import { ShieldCheck, MapPin, Lock, User as UserIcon, CheckCircle, AlertCircle, Award } from 'lucide-react';
 
 const VIETNAM_PROVINCES = [
   { name: 'Hồ Chí Minh', region: 'Nam' },
@@ -76,6 +77,9 @@ export default function ProfileInfoPage() {
   const {
     user,
     studentProfile,
+    studentPending,
+    handleSubmitStudentProfile,
+    studentProfileRefresh,
     activeTab,
     setActiveTab,
     isEditing,
@@ -150,6 +154,15 @@ export default function ProfileInfoPage() {
           <span>Hồ sơ cá nhân</span>
         </button>
         <button
+          onClick={() => setActiveTab('student')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer
+            ${activeTab === 'student' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-xs' : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'}
+          `}
+        >
+          <Award size={14} />
+          <span>HSSV - Đặc quyền</span>
+        </button>
+        <button
           onClick={() => setActiveTab('addresses')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer
             ${activeTab === 'addresses' ? 'bg-slate-900 text-white shadow-xs' : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'}
@@ -185,6 +198,15 @@ export default function ProfileInfoPage() {
             setEditPhone(user.phone || '');
             setIsEditing(false);
           }}
+        />
+      )}
+
+      {activeTab === 'student' && (
+        <StudentProfileTab
+          studentProfile={studentProfile}
+          onSubmit={handleSubmitStudentProfile}
+          pending={studentPending}
+          onRefresh={studentProfileRefresh}
         />
       )}
 

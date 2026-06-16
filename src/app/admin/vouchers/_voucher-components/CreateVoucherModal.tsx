@@ -66,9 +66,9 @@ export function CreateVoucherModal({
                 onChange={(e) => setVoucherDiscountType(e.target.value)}
                 className='w-full py-2.5 px-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm outline-none focus:border-didongviet-red'
               >
-                <option value='fixed'>Tiền mặt cố định (fixed)</option>
-                <option value='percentage'>Phần trăm hóa đơn (percentage)</option>
-                <option value='hssv_tiered'>Phân tầng Học sinh SV (hssv_tiered)</option>
+                <option value='fixed'>Giảm giá tiền cố định </option>
+                <option value='percentage'>Phần trăm hóa đơn </option>
+                <option value='hssv_tiered'>Dành riêng cho Học sinh SV</option>
               </select>
             </div>
 

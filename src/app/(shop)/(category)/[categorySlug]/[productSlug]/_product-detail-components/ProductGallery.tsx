@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Heart,
-  ShieldCheck,
-  RotateCw,
-  Truck,
-  BadgeCheck,
-  Play,
-} from 'lucide-react';
+import { ShieldCheck, RotateCw, Truck, BadgeCheck, Play } from 'lucide-react';
 
 interface ProductGalleryProps {
   product: any;
@@ -40,7 +33,7 @@ function getYoutubeEmbedUrl(url: string): string | null {
     if (u.hostname === 'youtu.be') {
       return `https://www.youtube.com/embed${u.pathname}?autoplay=1`;
     }
-  } catch {}
+  } catch { }
   return null;
 }
 
@@ -54,7 +47,7 @@ function getYoutubeThumbnail(url: string): string | null {
     if (u.hostname === 'youtu.be') {
       return `https://img.youtube.com/vi${u.pathname}/hqdefault.jpg`;
     }
-  } catch {}
+  } catch { }
   return null;
 }
 
@@ -90,13 +83,13 @@ export default function ProductGallery({
   const allMedia: MediaItem[] = [
     ...(videoUrl
       ? [
-          {
-            type: 'video' as const,
-            url: videoUrl,
-            alt: 'Video sản phẩm',
-            thumb: youtubeThumbnail,
-          },
-        ]
+        {
+          type: 'video' as const,
+          url: videoUrl,
+          alt: 'Video sản phẩm',
+          thumb: youtubeThumbnail,
+        },
+      ]
       : []),
     ...allImages.map((img: any) => ({
       type: 'image' as const,
@@ -123,13 +116,6 @@ export default function ProductGallery({
             -{percentOff}%
           </span>
         )}
-
-        <button
-          onClick={() => setIsLiked(!isLiked)}
-          className={`absolute top-3 right-3 z-10 h-8 w-8 rounded-full border border-slate-100 bg-white flex items-center justify-center shadow-sm cursor-pointer transition-all hover:scale-110 ${isLiked ? 'text-didongviet-red' : 'text-gray-400'}`}
-        >
-          <Heart size={14} className={isLiked ? 'fill-didongviet-red' : ''} />
-        </button>
 
         {isVideoPlaying && videoUrl ? (
           isYoutube ? (

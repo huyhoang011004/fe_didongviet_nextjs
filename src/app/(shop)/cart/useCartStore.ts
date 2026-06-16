@@ -14,6 +14,8 @@ export interface CartItem {
   categorySlug?: string;
   selectedColor?: string;
   selectedStorage?: string;
+  stock?: number; // Tổng tồn kho của variant này (từ inventories)
+  isProductActive?: boolean; // Sản phẩm còn kinh doanh không?
 }
 
 interface CartState {
@@ -44,7 +46,7 @@ export const useCartStore = create<CartState>()(
       items: [],
       selected: [],
       loading: false,
- 
+
       fetchCart: async () => {
         try {
           set({ loading: true });
@@ -57,7 +59,7 @@ export const useCartStore = create<CartState>()(
                 const prod = item.product || {};
                 const variant = prod.variants?.find((v: any) => v._id === item.variantId);
                 const variantImage = variant?.variantImage;
-                
+
                 const thumbnail = variantImage || prod.images?.find((img: any) => img.isThumbnail)?.url || prod.imageUrl || '/placeholder-product.png';
                 return {
                   product: prod._id || item.product,
@@ -70,7 +72,9 @@ export const useCartStore = create<CartState>()(
                   selectedColor: item.selectedColor,
                   selectedStorage: item.selectedStorage,
                   slug: prod.slug,
-                  categorySlug: prod.category?.slug
+                  categorySlug: prod.category?.slug,
+                  stock: variant?.stock ?? 0,
+                  isProductActive: prod.isActive ?? true
                 };
               });
               set({ items: mappedItems });

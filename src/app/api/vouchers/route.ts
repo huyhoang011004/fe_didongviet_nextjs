@@ -1,10 +1,13 @@
+import { fetchWithAuth } from '@/shared/lib/api';
 import { NextResponse } from 'next/server';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export async function GET() {
   try {
-    const res = await fetch(`${API_URL}/vouchers`, { method: 'GET', cache: 'no-store' });
+    // Dùng fetchWithAuth để truyền token Authorization (nếu user đăng nhập)
+    // Backend sẽ dùng optionalAuth middleware để check HSSV status
+    const res = await fetchWithAuth(`${API_URL}/vouchers`, { method: 'GET' });
     if (!res.ok) {
       return NextResponse.json({ success: false, message: 'Không thể tải danh sách voucher.' }, { status: res.status });
     }

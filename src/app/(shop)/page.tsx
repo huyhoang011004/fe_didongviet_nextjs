@@ -52,6 +52,9 @@ export default function ShopHomepage() {
           flashSaleProducts={flashSaleProducts}
         />
 
+        {/* ─── SECTION SẢN PHẨM: THU CŨ ĐỔI MỚI ─── */}
+        <TradeInSection loading={loading} tradeInProducts={tradeInProducts} />
+
         {/* ─── 5. SECTION SẢN PHẨM: IPHONE ─── */}
         <ProductSection
           title='iPhone Chính Hãng'
@@ -176,9 +179,6 @@ export default function ShopHomepage() {
           viewAllLink='/category/voucher'
           tabs={['Xem tất cả', 'Philips', 'Xiaomi', 'Bear']}
         />
-
-        {/* ─── SECTION SẢN PHẨM: THU CŨ ĐỔI MỚI ─── */}
-        <TradeInSection loading={loading} tradeInProducts={tradeInProducts} />
 
         {/* ─── TIN TỨC CÔNG NGHỆ ─── */}
         <BlogSection loading={loading} blogs={blogs} />

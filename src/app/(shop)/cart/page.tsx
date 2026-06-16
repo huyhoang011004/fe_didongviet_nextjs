@@ -91,6 +91,15 @@ export default function CartPage() {
     selected.includes(`${item.product}|${item.variant}`),
   );
 
+  // Kiểm tra sản phẩm nào còn kinh doanh và còn hàng
+  const validItems = cartItems.filter((item) => {
+    const stock = item.stock ?? 0;
+    const isActive = item.isProductActive ?? true;
+    return isActive && stock > 0;
+  });
+
+  const hasAnyValidItem = validItems.length > 0;
+
   // Tính tổng tiền tạm tính cho các sản phẩm đã chọn
   const selectedTotalPrice = selectedItems.reduce(
     (sum, item) => sum + (item.salePrice || item.price) * item.quantity,
@@ -400,6 +409,23 @@ export default function CartPage() {
       });
       return;
     }
+
+    // Kiểm tra sản phẩm được chọn có còn hàng và active không
+    const invalidItem = selectedItems.find((item) => {
+      const stock = item.stock ?? 0;
+      const isActive = item.isProductActive ?? true;
+      return !isActive || stock === 0;
+    });
+
+    if (invalidItem) {
+      setAlert({
+        type: 'error',
+        message:
+          'Sản phẩm đã hết hàng hoặc ngừng kinh doanh, vui lòng bỏ chọn và thử lại',
+      });
+      return;
+    }
+
     router.push('/checkout');
   };
 
@@ -628,12 +654,13 @@ export default function CartPage() {
             {/* Thanh thanh toán bottom bar (Shopee style, sticky bottom) */}
             <div className='sticky bottom-0 z-30 bg-white border border-slate-100 shadow-lg rounded-2xl py-3 px-6 flex flex-col sm:flex-row items-center justify-between gap-4'>
               <div className='flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-start'>
-                <label className='flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none'>
+                <label className={`flex items-center gap-2 text-xs font-semibold text-slate-700 select-none ${!hasAnyValidItem ? 'opacity-50' : 'cursor-pointer'}`}>
                   <input
                     type='checkbox'
                     checked={isAllSelected}
+                    disabled={!hasAnyValidItem}
                     onChange={handleSelectAll}
-                    className='rounded border-slate-300 text-didongviet-red focus:ring-didongviet-red w-4.5 h-4.5 cursor-pointer'
+                    className={`rounded border-slate-300 text-didongviet-red focus:ring-didongviet-red w-4.5 h-4.5 ${hasAnyValidItem ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                   />
                   <span>Chọn Tất Cả ({cartItems.length})</span>
                 </label>
@@ -687,40 +714,40 @@ export default function CartPage() {
 
         <CartSEOAndFAQ seoContent={seoContent} faqs={faqs} />
 
-      {/* Pop-up Voucher selection modal */}
-      {showVoucherModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs animate-in fade-in duration-200'>
-          <div className='bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl border border-slate-100 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200'>
-            <div className='flex items-center justify-between border-b border-slate-100 pb-3 mb-4 flex-shrink-0'>
-              <h3 className='text-sm font-black text-slate-800 uppercase tracking-tight'>
-                Chọn mã giảm giá (Voucher)
-              </h3>
-              <button
-                onClick={() => setShowVoucherModal(false)}
-                className='text-slate-400 hover:text-slate-600 text-lg font-bold p-1 bg-transparent border-none cursor-pointer'
-              >
-                ×
-              </button>
-            </div>
+        {/* Pop-up Voucher selection modal */}
+        {showVoucherModal && (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs animate-in fade-in duration-200'>
+            <div className='bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl border border-slate-100 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200'>
+              <div className='flex items-center justify-between border-b border-slate-100 pb-3 mb-4 flex-shrink-0'>
+                <h3 className='text-sm font-black text-slate-800 uppercase tracking-tight'>
+                  Chọn mã giảm giá (Voucher)
+                </h3>
+                <button
+                  onClick={() => setShowVoucherModal(false)}
+                  className='text-slate-400 hover:text-slate-600 text-lg font-bold p-1 bg-transparent border-none cursor-pointer'
+                >
+                  ×
+                </button>
+              </div>
 
-            <div className='flex-1 overflow-y-auto pr-1'>
-              <VoucherList
-                applicableVouchers={applicableVouchers}
-                vouchers={vouchers}
-                bestVoucherCode={bestVoucherCode}
-                appliedVoucher={appliedVoucher}
-                onApplyVoucher={(v: any) => applyVoucherByCode(v.code)}
-                onManualApply={(code: string) => {
-                  setVoucherCode(code);
-                  setTimeout(() => handleApplyVoucher(), 50);
-                }}
-                loading={voucherLoading}
-              />
+              <div className='flex-1 overflow-y-auto pr-1'>
+                <VoucherList
+                  applicableVouchers={applicableVouchers}
+                  vouchers={vouchers}
+                  bestVoucherCode={bestVoucherCode}
+                  appliedVoucher={appliedVoucher}
+                  onApplyVoucher={(v: any) => applyVoucherByCode(v.code)}
+                  onManualApply={(code: string) => {
+                    setVoucherCode(code);
+                    setTimeout(() => handleApplyVoucher(), 50);
+                  }}
+                  loading={voucherLoading}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
-  </div>
   );
 }
