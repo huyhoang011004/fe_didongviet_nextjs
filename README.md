@@ -188,4 +188,4 @@ npm run start
 
 > ⚡ **Tác giả:** Nguyễn Văn Huy Hoàng  
 > **Đề tài:** Hệ thống quản lý và bán hàng trực tuyến cho chuỗi cửa hàng Di Động Việt  
-> **Backend:** https://github.com/<your-username>/be_didongviet_expressjs
+> **Backend:** https://github.com/huyhoang011004/Be_Didongviet
